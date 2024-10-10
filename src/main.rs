@@ -1,14 +1,14 @@
 use clap::Parser;
-
+use diffusers::
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
     /// prompt request for model
-    #[arg(short, long, default_value_t=String::from("Generate a red tabby cat."))]
+    #[arg(short='p', long="prompt", default_value_t=String::from("Generate a red tabby cat."))]
     prompt: String,
 
     /// Number of images to generate
-    #[arg(short, long, default_value_t = 1)]
+    #[arg(short='n', long="n_images", default_value_t = 1)]
     n_images: u8,
 }
 
