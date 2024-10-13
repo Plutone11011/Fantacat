@@ -1,5 +1,5 @@
 use clap::Parser;
-use diffusers::
+
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {

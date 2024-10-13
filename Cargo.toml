@@ -6,3 +6,4 @@ edition = "2021"
 [dependencies]
 candle-core = { git = "https://github.com/huggingface/candle.git", version = "0.7.2", features = ["cuda"] }
 clap = { version = "4.5.20", features = ["derive"] }
+hf-hub = { version = "0.3.2", features = ["tokio"] }
