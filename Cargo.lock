@@ -448,6 +448,7 @@ dependencies = [
  "candle-core",
  "clap",
  "hf-hub",
+ "tokio",
 ]
 
 [[package]]
