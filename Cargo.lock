@@ -172,7 +172,7 @@ checksum = "428d9aa8fbc0670b7b8d6030a7fadd0f86151cae55e4dbbece15f3780a3dfaf3"
 [[package]]
 name = "candle-core"
 version = "0.7.2"
-source = "git+https://github.com/huggingface/candle.git#0d96ec31e8be03f844ed0aed636d6217dee9c7bc"
+source = "git+https://github.com/huggingface/candle.git#7c09215ef443256523d2de2579db56d1b59fd683"
 dependencies = [
  "byteorder",
  "candle-kernels",
@@ -194,9 +194,23 @@ dependencies = [
 [[package]]
 name = "candle-kernels"
 version = "0.7.2"
-source = "git+https://github.com/huggingface/candle.git#0d96ec31e8be03f844ed0aed636d6217dee9c7bc"
+source = "git+https://github.com/huggingface/candle.git#7c09215ef443256523d2de2579db56d1b59fd683"
 dependencies = [
  "bindgen_cuda",
+]
+
+[[package]]
+name = "candle-nn"
+version = "0.7.2"
+source = "git+https://github.com/huggingface/candle.git#7c09215ef443256523d2de2579db56d1b59fd683"
+dependencies = [
+ "candle-core",
+ "half",
+ "num-traits",
+ "rayon",
+ "safetensors",
+ "serde",
+ "thiserror",
 ]
 
 [[package]]
@@ -446,6 +460,7 @@ name = "fantacat-cli"
 version = "0.1.0"
 dependencies = [
  "candle-core",
+ "candle-nn",
  "clap",
  "hf-hub",
  "tokio",
@@ -958,7 +973,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4979f22fdb869068da03c9f7528f8297c6fd2606bc3a4affe42e6a823fdb8da4"
 dependencies = [
  "cfg-if",
- "windows-targets 0.52.6",
+ "windows-targets 0.48.5",
 ]
 
 [[package]]
@@ -2013,7 +2028,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.52.0",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
