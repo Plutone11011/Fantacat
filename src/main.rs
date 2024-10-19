@@ -1,12 +1,10 @@
 use clap::Parser;
-use hf_hub::api::tokio::Api;
-use candle_core::Device;
-use std::any::type_name;
+// use hf_hub::api::tokio::Api;
+// use candle_core::Device;
 use tokio;
 
-fn print_type_of<T>(_: &T) {
-    println!("{}", std::any::type_name::<T>());
-}
+mod stable_diffusion;
+
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -22,13 +20,12 @@ struct Args {
 
 #[tokio::main]
 async fn main() {
-    let args = Args::parse();
-
-    let api = Api::new().unwrap();
-    let repo = api.model("stable-diffusion-v1-5/stable-diffusion-v1-5".to_string());
-    let weights = repo.get("v1-5-pruned.safetensors").await.unwrap();
-    let weights = candle_core::safetensors::load(weights, &Device::Cpu);
+    let _args = Args::parse();
+    // let api = Api::new().unwrap();
+    // let repo = api.model("stable-diffusion-v1-5/stable-diffusion-v1-5".to_string());
+    // let weights = repo.get("v1-5-pruned.safetensors").await.unwrap();
+    // let weights = candle_core::safetensors::load(weights, &Device::Cpu);
 
     println!("Model weights loaded!");
-    println!("{:?}", print_type_of(&weights))
+    // println!("{:?}", print_type_of(&weights))
 }
