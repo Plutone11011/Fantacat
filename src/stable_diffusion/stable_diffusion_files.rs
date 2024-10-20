@@ -1,5 +1,9 @@
+use std;
+use hf_hub::api::sync::Api;
+use anyhow::Result;
+
 #[derive(Debug)]
-pub enum ModelFile{
+pub enum StableDiffusionFiles{
 
     Tokenizer,
     Clip,
@@ -7,7 +11,7 @@ pub enum ModelFile{
     Vae
 }
 
-impl ModelFile{
+impl StableDiffusionFiles{
 
     pub fn get_repo(&self) -> &str{
 
@@ -48,6 +52,21 @@ impl ModelFile{
             }
         }
     }
+
+    pub fn get(&self, filename: Option<String>, use_f16: bool) -> Result<std::path::PathBuf>{
+        // Returns filename if it exists
+        // 
+        match filename {
+            Some(filename) => Ok(std::path::PathBuf::from(filename)),
+            None => {
+                let repo = self.get_repo();
+                let filepath = self.get_path(use_f16);
+
+                let filename = Api::new()?.model(repo.to_string()).get(filepath)?;
+                Ok(filename)
+            }
+        }
+    }
 }
 
 
@@ -58,7 +77,7 @@ mod tests {
 
     #[test]
     fn get_unet() {
-        let model_file = ModelFile::Unet;
+        let model_file = StableDiffusionFiles::Unet;
         let unet_repo = model_file.get_repo();
         let unet_path = model_file.get_path(true);
         
@@ -68,7 +87,7 @@ mod tests {
 
     #[test]
     fn get_vae() {
-        let model_file = ModelFile::Vae;
+        let model_file = StableDiffusionFiles::Vae;
         let vae_repo = model_file.get_repo();
         let vae_path = model_file.get_path(false);
         
@@ -77,7 +96,7 @@ mod tests {
     }
     #[test]
     fn get_tokenizer() {
-        let model_file = ModelFile::Tokenizer;
+        let model_file = StableDiffusionFiles::Tokenizer;
         let tokenizer_repo = model_file.get_repo();
         let tokenizer_path = model_file.get_path(true);
         
@@ -86,7 +105,7 @@ mod tests {
     }
     #[test]
     fn get_encoder() {
-        let model_file = ModelFile::Clip;
+        let model_file = StableDiffusionFiles::Clip;
         let encoder_repo = model_file.get_repo();
         let encoder_path = model_file.get_path(true);
         
