@@ -642,7 +642,6 @@ dependencies = [
  "candle-transformers",
  "clap",
  "hf-hub",
- "lazy_static",
  "tokenizers",
  "tokio",
 ]
