@@ -1,7 +1,7 @@
 use tokenizers::Tokenizer;
 use candle_transformers::models::stable_diffusion;
-use candle_core::Tensor;
 use anyhow::{Error, Result};
+
 
 
 use crate::stable_diffusion::stable_diffusion_files;
@@ -49,17 +49,35 @@ pub fn get_padding_id(tokenizer: &Tokenizer, stable_diffusion_config: &stable_di
 // }
 
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-//     let tokenizer ;
+    #[test]
+    fn test_tokenizer(){
+        let tokenizer = get_tokenizer();
 
-//     #[cfg(test)]
-//     #[ctor::ctor]
-//     fn init() {
-//         tokenizer = get_tokenizer;
-//     }
+        assert!(tokenizer.is_ok())
+    }
+    // static TOKENIZER: Result<Tokenizer> = get_tokenizer();
+    #[test]
+    fn test_get_padding_id() -> Result<(), String>{
 
+        let width = Some(640 as usize);
+        let height: Option<usize> = Some(480 as usize);
+        let sd_config = stable_diffusion::StableDiffusionConfig::v1_5(None, height, width);
+        let tokenizer = get_tokenizer();
+
+        match tokenizer {
+            Ok(tokenizer) => {
+                let padding_id = get_padding_id(&tokenizer, &sd_config);
+                assert_eq!(padding_id, *tokenizer.get_vocab(true).get(CLIP_SPECIAL_TOKEN).unwrap());
+                Ok(())
+            },
+            Err(_e) => Err(String::from("Error while downloading tokenizer"))
+        }
+    }
+
+}
 //     #[test]
 //     fn get_padding_id() {
