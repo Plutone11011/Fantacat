@@ -1,8 +1,8 @@
 use tokenizers::Tokenizer;
 use candle_transformers::models::stable_diffusion;
 use anyhow;
+use candle_transformers::models::mimi::candle::{Device, DType};
 use candle_core;
-
 
 
 use crate::stable_diffusion::stable_diffusion_files;
@@ -19,6 +19,15 @@ fn get_tokenizer() -> anyhow::Result<Tokenizer>{
 
     Ok(tokenizer)
     
+}
+
+fn get_embedding_model(stable_diffusion_config: &stable_diffusion::StableDiffusionConfig, device: &Device) -> anyhow::Result<stable_diffusion::clip::ClipTextTransformer>{
+    let clip_sd = stable_diffusion_files::StableDiffusionFiles::Clip;
+    let clip_weights_file = clip_sd.get(None, true)?;
+
+    let text_model = stable_diffusion::build_clip_transformer(&stable_diffusion_config.clip, clip_weights_file, device, DType::F32)?;
+
+    Ok(text_model)
 }
 
 
@@ -137,5 +146,3 @@ mod tests {
     // }
 
 }
-//     #[test]
-//     fn get_padding_id() {
