@@ -76,10 +76,10 @@ fn encode_text(text: &str, tokenizer: &Tokenizer, stable_diffusion_config: &stab
 }
 
 
-pub fn get_embeddings(encoded_text :&candle_core::Tensor, text_model: &stable_diffusion::clip::ClipTextTransformer) -> anyhow::Result<candle_core::Tensor>{
+pub fn get_embeddings(encoded_text :&candle_core::Tensor, embedding_model: &stable_diffusion::clip::ClipTextTransformer) -> anyhow::Result<candle_core::Tensor>{
 
-    let embeddings = text_model.forward(encoded_text)?;
-
+    let embeddings = embedding_model.forward(encoded_text)?;
+    println!("{:?}", embeddings);
     Ok(embeddings)
 
 }
@@ -111,7 +111,7 @@ mod tests {
 
     #[test]
     fn test_encode_text() -> anyhow::Result<()>{
-        let text = "First sentence";
+        let text = "Test sentence";
 
         let width = Some(640 as usize);
         let height: Option<usize> = Some(480 as usize);
@@ -137,5 +137,37 @@ mod tests {
         Ok(())
  
     }
+
+    #[test]
+    fn test_get_embeddings() -> anyhow::Result<()>{
+
+        let text = "Test sentence";
+
+        let width = Some(640 as usize);
+        let height: Option<usize> = Some(480 as usize);
+        let sd_config = stable_diffusion::StableDiffusionConfig::v1_5(None, height, width);
+        let tokenizer = get_tokenizer()?;
+            
+        // assumes padding token in clip config has been set to None
+        let encoded_text = encode_text(text, &tokenizer, &sd_config, &candle_core::Device::Cpu)?;
+        let embedding_model = get_embedding_model(&sd_config, &candle_core::Device::Cpu)?;
+
+        let embeddings = get_embeddings(&encoded_text, &embedding_model);
+
+        assert!(embeddings.is_ok());
+        
+        if let Ok(embs) = embeddings {
+            
+            let embeddings_size: &candle_core::Shape = embs.shape();
+            let encoded_text_size: &candle_core::Shape = encoded_text.shape();
+            assert_eq!(embeddings_size.rank(), 3);
+            assert_eq!(encoded_text_size.rank(), 2);
+            assert_eq!(embeddings_size.clone().into_dims()[1], encoded_text_size.clone().into_dims()[1]);
+            
+        }
+        // assert_eq!()
+        Ok(())
+    }
+
 
 }
