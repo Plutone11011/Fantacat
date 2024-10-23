@@ -28,10 +28,10 @@ impl StableDiffusionFiles{
             Self::Tokenizer => "tokenizer.json",
             Self::Clip => {
                 if use_f16 {
-                    "text-encoder/model.fp16.safetensors"
+                    "text_encoder/model.fp16.safetensors"
                 }
                 else {
-                    "text-encoder/model.safetensors"
+                    "text_encoder/model.safetensors"
                 }
             },
             Self::Unet => {
@@ -110,6 +110,6 @@ mod tests {
         let encoder_path = model_file.get_path(true);
         
         assert_eq!(encoder_repo, "stable-diffusion-v1-5/stable-diffusion-v1-5");
-        assert_eq!(encoder_path, "text-encoder/model.fp16.safetensors");
+        assert_eq!(encoder_path, "text_encoder/model.fp16.safetensors");
     }
 }

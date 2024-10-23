@@ -1,8 +1,8 @@
+use candle_nn::Module;
 use tokenizers::Tokenizer;
 use candle_transformers::models::stable_diffusion;
 use anyhow;
-use candle_transformers::models::mimi::candle::{Device, DType};
-use candle_core;
+use candle_core::{Device, DType};
 
 
 use crate::stable_diffusion::stable_diffusion_files;
@@ -23,10 +23,12 @@ fn get_tokenizer() -> anyhow::Result<Tokenizer>{
 
 fn get_embedding_model(stable_diffusion_config: &stable_diffusion::StableDiffusionConfig, device: &Device) -> anyhow::Result<stable_diffusion::clip::ClipTextTransformer>{
     let clip_sd = stable_diffusion_files::StableDiffusionFiles::Clip;
+
     let clip_weights_file = clip_sd.get(None, true)?;
 
     let text_model = stable_diffusion::build_clip_transformer(&stable_diffusion_config.clip, clip_weights_file, device, DType::F32)?;
 
+    
     Ok(text_model)
 }
 
@@ -68,26 +70,19 @@ fn encode_text(text: &str, tokenizer: &Tokenizer, stable_diffusion_config: &stab
 
 
     let encoded_text = candle_core::Tensor::new(padded_tokens.as_slice(), device)?.unsqueeze(0)?;
+    print!("{:?}", encoded_text);
     Ok(encoded_text)
 
 }
 
 
-// pub fn get_embeddings(text :&str, tokenizer: &Tokenizer, stable_diffusion_config: &stable_diffusion::StableDiffusionConfig) -> anyhow::Result<Tensor>{
+pub fn get_embeddings(encoded_text :&candle_core::Tensor, text_model: &stable_diffusion::clip::ClipTextTransformer) -> anyhow::Result<candle_core::Tensor>{
 
-//     let pad_id = get_padding_id(tokenizer, stable_diffusion_config);
+    let embeddings = text_model.forward(encoded_text)?;
 
-//     println!("Embedding prompt {}", text);
+    Ok(embeddings)
 
-//     let mut tokens = tokenizer
-//         .encode(text, true)
-//         .map_err(anyhow::Error::msg)?
-//         .get_ids()
-//         .to_vec();
-
-//     Ok(candle_core::Tensor(tokens))
-
-// }
+}
 
 
 #[cfg(test)]
@@ -100,49 +95,47 @@ mod tests {
 
         assert!(tokenizer.is_ok())
     }
-    // #[test]
-    // fn test_get_padding_id() -> anyhow::Result<(), String>{
+    #[test]
+    fn test_get_padding_id() -> anyhow::Result<()>{
 
-    //     let width = Some(640 as usize);
-    //     let height: Option<usize> = Some(480 as usize);
-    //     let sd_config = stable_diffusion::StableDiffusionConfig::v1_5(None, height, width);
-    //     let tokenizer = get_tokenizer();
+        let width = Some(640 as usize);
+        let height: Option<usize> = Some(480 as usize);
+        let sd_config = stable_diffusion::StableDiffusionConfig::v1_5(None, height, width);
+        let tokenizer = get_tokenizer()?;
+        // assumes padding token in clip config has been set to None
+        let padding_id = get_padding_id(&tokenizer, &sd_config);
+        assert_eq!(padding_id, *tokenizer.get_vocab(true).get(CLIP_SPECIAL_TOKEN).unwrap());
+        Ok(())
 
-    //     match tokenizer {
-    //         Ok(tokenizer) => {
-    //             // assumes padding token in clip config has been set to None
-    //             let padding_id = get_padding_id(&tokenizer, &sd_config);
-    //             assert_eq!(padding_id, *tokenizer.get_vocab(true).get(CLIP_SPECIAL_TOKEN).unwrap());
-    //             Ok(())
-    //         },
-    //         Err(_e) => Err(String::from("Error while downloading tokenizer"))
-    //     }
-    // }
+    }
 
-    // #[test]
-    // fn test_encode_text() -> anyhow::Result<(), String>{
-    //     let text = "First sentence";
+    #[test]
+    fn test_encode_text() -> anyhow::Result<()>{
+        let text = "First sentence";
 
-    //     let width = Some(640 as usize);
-    //     let height: Option<usize> = Some(480 as usize);
-    //     let sd_config = stable_diffusion::StableDiffusionConfig::v1_5(None, height, width);
-    //     let tokenizer = get_tokenizer();
+        let width = Some(640 as usize);
+        let height: Option<usize> = Some(480 as usize);
+        let sd_config = stable_diffusion::StableDiffusionConfig::v1_5(None, height, width);
+        let tokenizer = get_tokenizer()?;
+            
+        // assumes padding token in clip config has been set to None
+        let encoded_text = encode_text(text, &tokenizer, &sd_config, &candle_core::Device::Cpu);
+        assert!(encoded_text.is_ok());
+        Ok(())
+ 
+    }
 
-    //     match tokenizer {
-    //         Ok(tokenizer) => {
-    //             // assumes padding token in clip config has been set to None
-    //             let encoded_text = encode_text(text, &tokenizer, &sd_config, &candle_core::Device::Cpu);
-    //             match encoded_text {
-    //                 Ok(encoded_text) => {
+    #[test]
+    fn test_get_embedding_model() -> anyhow::Result<()>{
 
-    //                     Ok(())
-    //                 }
-    //                 Err(e) => Err(String::from("Error while encoding text"))
-    //             }
+        let width = Some(640 as usize);
+        let height: Option<usize> = Some(480 as usize);
+        let sd_config = stable_diffusion::StableDiffusionConfig::v1_5(None, height, width);
 
-    //         },
-    //         Err(_e) => Err(String::from("Error while downloading tokenizer"))
-    //     }
-    // }
+        let embedding_model = get_embedding_model(&sd_config, &candle_core::Device::Cpu);
+        assert!(embedding_model.is_ok());
+        Ok(())
+ 
+    }
 
 }
