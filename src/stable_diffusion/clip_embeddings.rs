@@ -26,7 +26,7 @@ fn get_embedding_model(embedding_file: Option<String>, stable_diffusion_config: 
 
     let clip_weights_file = clip_sd.get(embedding_file, true)?;
 
-    let text_model = stable_diffusion::build_clip_transformer(&stable_diffusion_config.clip, clip_weights_file, device, DType::F32)?;
+    let text_model = stable_diffusion::build_clip_transformer(&stable_diffusion_config.clip, clip_weights_file, device, DType::F16)?;
 
     
     Ok(text_model)
