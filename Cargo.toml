@@ -10,5 +10,6 @@ candle-nn = { git = "https://github.com/huggingface/candle.git", version = "0.7.
 candle-transformers = { git = "https://github.com/huggingface/candle.git", version = "0.7.2", features = ["cuda"]  }
 clap = { version = "4.5.20", features = ["derive"] }
 hf-hub = { version = "0.3.2", features = ["tokio"] }
+image = "0.25.4"
 tokenizers = "0.20.1"
 tokio = "1.40.0"

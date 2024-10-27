@@ -4,6 +4,7 @@ use clap::Parser;
 use tokio;
 
 mod stable_diffusion;
+mod image;
 
 
 #[derive(Parser, Debug)]
