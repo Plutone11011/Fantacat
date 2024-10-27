@@ -4,7 +4,7 @@ use candle_core::{Device, DType};
 
 use crate::stable_diffusion::stable_diffusion_files;
 
-fn get_vae(vae_file: Option<String>, stable_diffusion_config: &stable_diffusion::StableDiffusionConfig, device: &Device, dtype: DType) -> anyhow::Result<AutoEncoderKL>{
+pub fn get_vae(vae_file: Option<String>, stable_diffusion_config: &stable_diffusion::StableDiffusionConfig, device: &Device, dtype: DType) -> anyhow::Result<AutoEncoderKL>{
 
     let vae_sd = stable_diffusion_files::StableDiffusionFiles::Vae;
 
