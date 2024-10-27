@@ -9,7 +9,7 @@ use crate::stable_diffusion::stable_diffusion_files;
 
 const CLIP_SPECIAL_TOKEN: &str = "<|endoftext|>";
 
-fn get_tokenizer(tokenizer_file: Option<String>) -> anyhow::Result<Tokenizer>{
+pub fn get_tokenizer(tokenizer_file: Option<String>) -> anyhow::Result<Tokenizer>{
 
     let tokenizer_sd = stable_diffusion_files::StableDiffusionFiles::Tokenizer;
 
@@ -21,7 +21,7 @@ fn get_tokenizer(tokenizer_file: Option<String>) -> anyhow::Result<Tokenizer>{
     
 }
 
-fn get_embedding_model(embedding_file: Option<String>, stable_diffusion_config: &stable_diffusion::StableDiffusionConfig, device: &Device) -> anyhow::Result<stable_diffusion::clip::ClipTextTransformer>{
+pub fn get_embedding_model(embedding_file: Option<String>, stable_diffusion_config: &stable_diffusion::StableDiffusionConfig, device: &Device) -> anyhow::Result<stable_diffusion::clip::ClipTextTransformer>{
     let clip_sd = stable_diffusion_files::StableDiffusionFiles::Clip;
 
     let clip_weights_file = clip_sd.get(embedding_file, true)?;
@@ -43,7 +43,7 @@ fn get_padding_id(tokenizer: &Tokenizer, stable_diffusion_config: &stable_diffus
     pad_id
 }
 
-fn encode_text(text: &str, tokenizer: &Tokenizer, stable_diffusion_config: &stable_diffusion::StableDiffusionConfig, device: &candle_core::Device) -> anyhow::Result<candle_core::Tensor>{
+pub fn encode_text(text: &str, tokenizer: &Tokenizer, stable_diffusion_config: &stable_diffusion::StableDiffusionConfig, device: &candle_core::Device) -> anyhow::Result<candle_core::Tensor>{
 
     let tokens = tokenizer
         .encode(text, true)
