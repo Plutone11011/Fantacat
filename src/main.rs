@@ -13,18 +13,28 @@ mod image_utils;
 #[command(version, about, long_about = None)]
 struct Args {
     /// prompt request for model
-    #[arg(short='p', long="prompt", default_value_t=String::from("Generate a red tabby cat."))]
+    #[arg(short='p', long="prompt", default_value_t=String::from("Red cat with white and red stripes (hd, realistic, high-def)."))]
     prompt: String,
 
     /// Number of images to generate
-    #[arg(short='n', long="n_images", default_value_t = 1)]
+    #[arg(long="n_images", default_value_t = 1)]
     n_images: usize,
+
+    /// Number of diffusion steps
+    #[arg(long="n_steps", default_value_t = 5)]
+    n_steps: usize,
 
     #[arg(long="intermediary_images", default_value_t = true)]
     intermediary_images: bool,
 
     #[arg(short='o', long="output")]
     final_image: String,
+
+    #[arg(long="use_flash_attn", default_value_t = false)]
+    use_flash_attn: bool,
+
+
+
 }
 
 
@@ -36,14 +46,14 @@ fn run_diffusion(args: Args) -> Result<()> {
     let width = Some(640 as usize);
     let height = Some(480 as usize);
     let sd_config = sd::StableDiffusionConfig::v1_5(None, height, width);
-    let n_steps = 5; //number of diffusion steps
+    let n_steps = args.n_steps; 
     let device = &candle_core::Device::new_cuda(0)?;
     let scheduler = sd_config.build_scheduler(n_steps)?;
     let batch_size = 1;
     let dtype = candle_core::DType::F16;
 
     let text = args.prompt ;
-    
+    println!("Generate an image for prompt: {}", text);
     let vae_scale: f64 = 0.18215;
     // match sd_version {
     //     StableDiffusionVersion::V1_5
@@ -58,8 +68,11 @@ fn run_diffusion(args: Args) -> Result<()> {
         let embedding_model = stable_diffusion::clip_embeddings::get_embedding_model(None, &sd_config, device)?;
         stable_diffusion::clip_embeddings::get_embeddings(&encoded_text, &embedding_model)
     }?;
+    println!("Embeddings created.");
     let vae = stable_diffusion::vae::get_vae(None, &sd_config, device, dtype)?;
-    let unet = stable_diffusion::unet::get_unet(None, &sd_config, device, dtype, true)?;
+    println!("VAE created.");
+    let unet = stable_diffusion::unet::get_unet(None, &sd_config, device, dtype, args.use_flash_attn)?;
+    println!("UNet created");
 
     for idx in 0..args.n_images {
         println!("Generating image number {}", idx);
@@ -108,9 +121,21 @@ fn run_diffusion(args: Args) -> Result<()> {
             }
         }
 
+        println!("Generating final image version for sample {}", idx);
+        image_utils::save::save_batch_encoded_images(
+            &vae,
+            &latents,
+            vae_scale,
+            batch_size,
+            idx,
+            &args.final_image,
+            args.n_images,
+            None
+        )?;
+
     }
 
-    println!("Model weights loaded!");
+    println!("Finished!");
     Ok(())
     // println!("{:?}", print_type_of(&weights))
 }

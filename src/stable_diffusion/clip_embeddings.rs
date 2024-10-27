@@ -39,7 +39,6 @@ fn get_padding_id(tokenizer: &Tokenizer, stable_diffusion_config: &stable_diffus
         Some(padding) => *tokenizer.get_vocab(true).get(padding.as_str()).unwrap(),
         None => *tokenizer.get_vocab(true).get(CLIP_SPECIAL_TOKEN).unwrap()
     };
-    println!("Padding token id is {}", pad_id);
     pad_id
 }
 
@@ -70,7 +69,6 @@ pub fn encode_text(text: &str, tokenizer: &Tokenizer, stable_diffusion_config: &
 
 
     let encoded_text = candle_core::Tensor::new(padded_tokens.as_slice(), device)?.unsqueeze(0)?;
-    print!("{:?}", encoded_text);
     Ok(encoded_text)
 
 }
@@ -79,7 +77,6 @@ pub fn encode_text(text: &str, tokenizer: &Tokenizer, stable_diffusion_config: &
 pub fn get_embeddings(encoded_text :&candle_core::Tensor, embedding_model: &stable_diffusion::clip::ClipTextTransformer) -> anyhow::Result<candle_core::Tensor>{
 
     let embeddings = embedding_model.forward(encoded_text)?;
-    println!("{:?}", embeddings);
     Ok(embeddings)
 
 }

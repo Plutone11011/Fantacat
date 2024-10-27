@@ -70,6 +70,7 @@ pub fn save_batch_encoded_images(
             batch + num_samples,
             timestep_ids,
         );
+        println!("Save image in {}", image_filename);
         save_image(&image, image_filename)?;
     }
     Ok(())
