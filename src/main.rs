@@ -2,10 +2,11 @@ use clap::Parser;
 use anyhow::Result;
 use candle_transformers::models::stable_diffusion as sd;
 use candle_core::Tensor;
+
 // use hf_hub::api::tokio::Api;
 // use candle_core::Device;
 mod stable_diffusion;
-mod image;
+mod image_utils;
 
 
 #[derive(Parser, Debug)]
@@ -17,8 +18,17 @@ struct Args {
 
     /// Number of images to generate
     #[arg(short='n', long="n_images", default_value_t = 1)]
-    n_images: u8,
+    n_images: usize,
+
+    #[arg(long="intermediary_images", default_value_t = true)]
+    intermediary_images: bool,
+
+    #[arg(short='o', long="output")]
+    final_image: String,
 }
+
+
+
 
 fn run_diffusion(args: Args) -> Result<()> {
     
@@ -27,17 +37,25 @@ fn run_diffusion(args: Args) -> Result<()> {
     let height = Some(480 as usize);
     let sd_config = sd::StableDiffusionConfig::v1_5(None, height, width);
     let n_steps = 5; //number of diffusion steps
-    let device = &candle_core::Device::cuda_if_available(0)?;
+    let device = &candle_core::Device::new_cuda(0)?;
     let scheduler = sd_config.build_scheduler(n_steps)?;
     let batch_size = 1;
     let dtype = candle_core::DType::F16;
 
     let text = args.prompt ;
     
+    let vae_scale: f64 = 0.18215;
+    // match sd_version {
+    //     StableDiffusionVersion::V1_5
+    //     | StableDiffusionVersion::V2_1
+    //     | StableDiffusionVersion::Xl => 0.18215,
+    //     StableDiffusionVersion::Turbo => 0.13025,
+    // };
+
     let embeddings = {
         let tokenizer = stable_diffusion::clip_embeddings::get_tokenizer(None)?;
-        let encoded_text = stable_diffusion::clip_embeddings::encode_text(&text, &tokenizer, &sd_config, &candle_core::Device::Cpu)?;
-        let embedding_model = stable_diffusion::clip_embeddings::get_embedding_model(None, &sd_config, &candle_core::Device::Cpu)?;
+        let encoded_text = stable_diffusion::clip_embeddings::encode_text(&text, &tokenizer, &sd_config, device)?;
+        let embedding_model = stable_diffusion::clip_embeddings::get_embedding_model(None, &sd_config, device)?;
         stable_diffusion::clip_embeddings::get_embeddings(&encoded_text, &embedding_model)
     }?;
     let vae = stable_diffusion::vae::get_vae(None, &sd_config, device, dtype)?;
@@ -75,6 +93,19 @@ fn run_diffusion(args: Args) -> Result<()> {
 
             let dt = start_time.elapsed().as_secs_f32();
             println!("step {}/{n_steps} done, {:.2}s", timestep_index + 1, dt);
+
+            if args.intermediary_images {
+                image_utils::save::save_batch_encoded_images(
+                    &vae,
+                    &latents,
+                    vae_scale,
+                    batch_size,
+                    idx,
+                    &args.final_image,
+                    args.n_images,
+                    Some(timestep_index + 1),
+                )?;
+            }
         }
 
     }
