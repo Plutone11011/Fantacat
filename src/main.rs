@@ -16,6 +16,9 @@ struct Args {
     #[arg(short='p', long="prompt", default_value_t=String::from("Red cat with white and red stripes (hd, realistic, high-def)."))]
     prompt: String,
 
+    #[arg(long="uncond_prompt", default_value_t=String::from(""))]
+    uncond_prompt: String,
+
     /// Number of images to generate
     #[arg(long="n_images", default_value_t = 1)]
     n_images: usize,
@@ -52,8 +55,8 @@ fn run_diffusion(args: Args) -> Result<()> {
     let batch_size = 1;
     let dtype = candle_core::DType::F16;
 
-    let text = args.prompt ;
-    println!("Generate an image for prompt: {}", text);
+    let prompt = args.prompt ;
+    println!("Generate an image for prompt: {}", prompt);
     let vae_scale: f64 = 0.18215;
     // match sd_version {
     //     StableDiffusionVersion::V1_5
@@ -64,9 +67,9 @@ fn run_diffusion(args: Args) -> Result<()> {
 
     let embeddings = {
         let tokenizer = stable_diffusion::clip_embeddings::get_tokenizer(None)?;
-        let encoded_text = stable_diffusion::clip_embeddings::encode_text(&text, &tokenizer, &sd_config, device)?;
+        let encoded_prompt = stable_diffusion::clip_embeddings::encode_prompt(&prompt, &tokenizer, &sd_config, device)?;
         let embedding_model = stable_diffusion::clip_embeddings::get_embedding_model(None, &sd_config, device)?;
-        stable_diffusion::clip_embeddings::get_embeddings(&encoded_text, &embedding_model)
+        stable_diffusion::clip_embeddings::get_embeddings(&encoded_prompt, &embedding_model)
     }?;
     println!("Embeddings created.");
     let vae = stable_diffusion::vae::get_vae(None, &sd_config, device, dtype)?;

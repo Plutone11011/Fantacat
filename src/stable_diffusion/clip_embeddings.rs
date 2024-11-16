@@ -42,10 +42,10 @@ fn get_padding_id(tokenizer: &Tokenizer, stable_diffusion_config: &stable_diffus
     pad_id
 }
 
-pub fn encode_text(text: &str, tokenizer: &Tokenizer, stable_diffusion_config: &stable_diffusion::StableDiffusionConfig, device: &candle_core::Device) -> anyhow::Result<candle_core::Tensor>{
+pub fn encode_prompt(prompt: &str, tokenizer: &Tokenizer, stable_diffusion_config: &stable_diffusion::StableDiffusionConfig, device: &candle_core::Device) -> anyhow::Result<candle_core::Tensor>{
 
     let tokens = tokenizer
-        .encode(text, true)
+        .encode(prompt, true)
         .map_err(anyhow::Error::msg)?
         .get_ids()
         .to_vec();
@@ -62,23 +62,32 @@ pub fn encode_text(text: &str, tokenizer: &Tokenizer, stable_diffusion_config: &
         .collect();
     } 
     else {
-        // text too long, panic
+        // prompt too long, panic
         anyhow::bail!("Prompt is too long ({}), max tokens allowed {}", n_tokens, stable_diffusion_config.clip.max_position_embeddings)
     }
 
 
 
-    let encoded_text = candle_core::Tensor::new(padded_tokens.as_slice(), device)?.unsqueeze(0)?;
-    Ok(encoded_text)
+    let encoded_prompt = candle_core::Tensor::new(padded_tokens.as_slice(), device)?.unsqueeze(0)?;
+    Ok(encoded_prompt)
 
 }
 
 
-pub fn get_embeddings(encoded_text :&candle_core::Tensor, embedding_model: &stable_diffusion::clip::ClipTextTransformer) -> anyhow::Result<candle_core::Tensor>{
+pub fn get_embeddings(encoded_prompt: &candle_core::Tensor, embedding_model: &stable_diffusion::clip::ClipTextTransformer) -> anyhow::Result<candle_core::Tensor>{
 
-    let embeddings = embedding_model.forward(encoded_text)?;
+    let embeddings = embedding_model.forward(encoded_prompt)?;
     Ok(embeddings)
 
+}
+
+pub fn get_embeddings_for_guidance_scale(encoded_prompt: &candle_core::Tensor, encoded_uncond_prompt: &candle_core::Tensor, embedding_model: &stable_diffusion::clip::ClipTextTransformer) -> anyhow::Result<candle_core::Tensor>{
+    let embeddings = embedding_model.forward(encoded_prompt)?;
+    let uncond_embeddings = embedding_model.forward(&encoded_uncond_prompt)?;
+
+    let final_embeddings = candle_core::Tensor::cat(&[uncond_embeddings, embeddings], 0)?;
+
+    Ok(final_embeddings)
 }
 
 
@@ -107,8 +116,8 @@ mod tests {
     }
 
     #[test]
-    fn test_encode_text() -> anyhow::Result<()>{
-        let text = "Test sentence";
+    fn test_encode_prompt() -> anyhow::Result<()>{
+        let prompt = "Test sentence";
 
         let width = Some(640 as usize);
         let height: Option<usize> = Some(480 as usize);
@@ -116,8 +125,8 @@ mod tests {
         let tokenizer = get_tokenizer(None)?;
             
         // assumes padding token in clip config has been set to None
-        let encoded_text = encode_text(text, &tokenizer, &sd_config, &candle_core::Device::Cpu);
-        assert!(encoded_text.is_ok());
+        let encoded_prompt = encode_prompt(prompt, &tokenizer, &sd_config, &candle_core::Device::Cpu);
+        assert!(encoded_prompt.is_ok());
         Ok(())
  
     }
@@ -138,7 +147,8 @@ mod tests {
     #[test]
     fn test_get_embeddings() -> anyhow::Result<()>{
 
-        let text = "Test sentence";
+        let prompt: &str = "Test sentence";
+        let uncond_prompt = "";
 
         let width = Some(640 as usize);
         let height: Option<usize> = Some(480 as usize);
@@ -146,20 +156,21 @@ mod tests {
         let tokenizer = get_tokenizer(None)?;
             
         // assumes padding token in clip config has been set to None
-        let encoded_text = encode_text(text, &tokenizer, &sd_config, &candle_core::Device::Cpu)?;
+        let encoded_prompt = encode_prompt(prompt, &tokenizer, &sd_config, &candle_core::Device::Cpu)?;
+        let encoded_uncond_prompt = encode_prompt(uncond_prompt, &tokenizer, &sd_config, &candle_core::Device::Cpu)?;
         let embedding_model = get_embedding_model(None, &sd_config, &candle_core::Device::Cpu)?;
 
-        let embeddings = get_embeddings(&encoded_text, &embedding_model);
+        let embeddings = get_embeddings_for_guidance_scale(&encoded_prompt, &encoded_uncond_prompt, &embedding_model);
 
         assert!(embeddings.is_ok());
         
         if let Ok(embs) = embeddings {
             
             let embeddings_size: &candle_core::Shape = embs.shape();
-            let encoded_text_size: &candle_core::Shape = encoded_text.shape();
+            let encoded_prompt_size: &candle_core::Shape = encoded_prompt.shape();
             assert_eq!(embeddings_size.rank(), 3);
-            assert_eq!(encoded_text_size.rank(), 2);
-            assert_eq!(embeddings_size.clone().into_dims()[1], encoded_text_size.clone().into_dims()[1]);
+            assert_eq!(encoded_prompt_size.rank(), 2);
+            assert_eq!(embeddings_size.clone().into_dims()[1], encoded_prompt_size.clone().into_dims()[1]);
             
         }
         // assert_eq!()
