@@ -1,7 +1,8 @@
+use candle_nn::embedding;
 use clap::Parser;
 use anyhow::Result;
 use candle_transformers::models::stable_diffusion as sd;
-use candle_core::Tensor;
+use candle_core::{Tensor, D};
 
 // use hf_hub::api::tokio::Api;
 // use candle_core::Device;
@@ -36,7 +37,8 @@ struct Args {
     #[arg(long="use_flash_attn", default_value_t = false)]
     use_flash_attn: bool,
 
-
+    #[arg(short='g', long="guidance_scale")]
+    guidance_scale: Option<f64>,
 
 }
 
@@ -50,12 +52,29 @@ fn run_diffusion(args: Args) -> Result<()> {
     let height = Some(480 as usize);
     let sd_config = sd::StableDiffusionConfig::v1_5(None, height, width);
     let n_steps = args.n_steps; 
-    let device = &candle_core::Device::new_cuda(0)?;
+    //let device = &candle_core::Device::new_cuda(0)?;
+    let device = &candle_core::Device::Cpu;
     let scheduler = sd_config.build_scheduler(n_steps)?;
     let batch_size = 1;
     let dtype = candle_core::DType::F16;
+    let guidance_scale = match args.guidance_scale {
+        None => 7.5,
+        Some(guidance_scale) => guidance_scale
+    };
+    let use_guidance_scale = guidance_scale > 1.0;
+    let t_start = 0 ; // relevant for img2img
+    // let guidance_scale = match guidance_scale {
+    //     Some(guidance_scale) => guidance_scale,
+    //     None => match sd_version {
+    //         StableDiffusionVersion::V1_5
+    //         | StableDiffusionVersion::V2_1
+    //         | StableDiffusionVersion::Xl => 7.5,
+    //         StableDiffusionVersion::Turbo => 0.,
+    //     },
+    // };
 
     let prompt = args.prompt ;
+    let uncond_prompt = args.uncond_prompt ;
     println!("Generate an image for prompt: {}", prompt);
     let vae_scale: f64 = 0.18215;
     // match sd_version {
@@ -64,14 +83,28 @@ fn run_diffusion(args: Args) -> Result<()> {
     //     | StableDiffusionVersion::Xl => 0.18215,
     //     StableDiffusionVersion::Turbo => 0.13025,
     // };
+    
+    
 
     let embeddings = {
         let tokenizer = stable_diffusion::clip_embeddings::get_tokenizer(None)?;
         let encoded_prompt = stable_diffusion::clip_embeddings::encode_prompt(&prompt, &tokenizer, &sd_config, device)?;
         let embedding_model = stable_diffusion::clip_embeddings::get_embedding_model(None, &sd_config, device)?;
-        stable_diffusion::clip_embeddings::get_embeddings(&encoded_prompt, &embedding_model)
+        if use_guidance_scale {
+            let encoded_uncond_prompt = stable_diffusion::clip_embeddings::encode_prompt(&uncond_prompt, &tokenizer, &sd_config, device)?;
+            stable_diffusion::clip_embeddings::get_embeddings_for_guidance_scale(&encoded_prompt, &encoded_uncond_prompt,&embedding_model)
+        }
+        else {
+            stable_diffusion::clip_embeddings::get_embeddings(&encoded_prompt, &embedding_model)
+        }
+        
     }?;
-    println!("Embeddings created.");
+    println!("Embeddings created {:?}.", embeddings.shape());
+    // only needed for turbo and xl since they use different embedding models
+    // let text_embeddings = Tensor::cat(&embeddings, D::Minus1)?;
+    let embeddings = embeddings.repeat((batch_size, 1, 1))?;
+    println!("Batch of embeddings created {:?}.", embeddings.shape());
+
     let vae = stable_diffusion::vae::get_vae(None, &sd_config, device, dtype)?;
     println!("VAE created.");
     let unet = stable_diffusion::unet::get_unet(None, &sd_config, device, dtype, args.use_flash_attn)?;
@@ -99,11 +132,32 @@ fn run_diffusion(args: Args) -> Result<()> {
 
         for (timestep_index, &timestep) in timesteps.iter().enumerate() {
             
+            if timestep_index < t_start {
+                continue;
+            }
             let start_time = std::time::Instant::now();
-            let latent_model_input = scheduler.scale_model_input(latents.clone(), timestep)?;
+
+            let latent_model_input = if use_guidance_scale {
+                // with guidance scale, need to start from duplicated latents
+                // because model will process prompt and unconditional prompt simultaneously
+                Tensor::cat(&[&latents, &latents], 0)?
+            } else {
+                latents.clone()
+            };
+
+            let latent_model_input = scheduler.scale_model_input(latent_model_input, timestep)?;
 
             let noise_pred =
                 unet.forward(&latent_model_input, timestep as f64, &embeddings)?;
+            
+            let noise_pred = if use_guidance_scale {
+                let noise_pred = noise_pred.chunk(2, 0)?;
+                let (noise_pred_uncond, noise_pred_text) = (&noise_pred[0], &noise_pred[1]);
+
+                (noise_pred_uncond + ((noise_pred_text - noise_pred_uncond)? * guidance_scale)?)?
+            } else {
+                noise_pred
+            };
 
             latents = scheduler.step(&noise_pred, timestep, &latents)?;
 
