@@ -48,12 +48,12 @@ struct Args {
 fn run_diffusion(args: Args) -> Result<()> {
     
 
-    let width = Some(640 as usize);
+    let width = Some(480 as usize);
     let height = Some(480 as usize);
     let sd_config = sd::StableDiffusionConfig::v1_5(None, height, width);
     let n_steps = args.n_steps; 
-    //let device = &candle_core::Device::new_cuda(0)?;
-    let device = &candle_core::Device::Cpu;
+    let device = &candle_core::Device::new_cuda(0)?;
+    // let device = &candle_core::Device::Cpu;
     let scheduler = sd_config.build_scheduler(n_steps)?;
     let batch_size = 1;
     let dtype = candle_core::DType::F16;
