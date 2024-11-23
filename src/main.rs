@@ -8,7 +8,7 @@ use candle_core::{Tensor, D};
 // use candle_core::Device;
 mod stable_diffusion;
 mod image_utils;
-
+mod prompt;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
