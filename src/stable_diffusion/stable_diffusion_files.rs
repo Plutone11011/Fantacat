@@ -76,7 +76,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_unet() {
+    fn sd_files_unet() {
         let model_file = StableDiffusionFiles::Unet;
         let unet_repo = model_file.get_repo();
         let unet_path = model_file.get_path(true);
@@ -86,7 +86,7 @@ mod tests {
     }
 
     #[test]
-    fn test_vae() {
+    fn sd_files_vae() {
         let model_file = StableDiffusionFiles::Vae;
         let vae_repo = model_file.get_repo();
         let vae_path = model_file.get_path(false);
@@ -95,7 +95,7 @@ mod tests {
         assert_eq!(vae_path, "vae/diffusion_pytorch_model.safetensors");
     }
     #[test]
-    fn test_tokenizer() {
+    fn sd_files_tokenizer() {
         let model_file = StableDiffusionFiles::Tokenizer;
         let tokenizer_repo = model_file.get_repo();
         let tokenizer_path = model_file.get_path(true);
@@ -104,7 +104,7 @@ mod tests {
         assert_eq!(tokenizer_path, "tokenizer.json");
     }
     #[test]
-    fn test_encoder() {
+    fn sd_files_encoder() {
         let model_file = StableDiffusionFiles::Clip;
         let encoder_repo = model_file.get_repo();
         let encoder_path = model_file.get_path(true);

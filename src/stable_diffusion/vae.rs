@@ -21,7 +21,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_get_vae() {
+    fn vae() {
 
         let width = Some(640 as usize);
         let height: Option<usize> = Some(480 as usize);

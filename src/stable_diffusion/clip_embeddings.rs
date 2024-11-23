@@ -96,13 +96,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_tokenizer(){
+    fn stable_diffusion_tokenizer(){
         let tokenizer = get_tokenizer(None);
 
         assert!(tokenizer.is_ok())
     }
     #[test]
-    fn test_get_padding_id() -> anyhow::Result<()>{
+    fn stable_diffusion_get_padding_id() -> anyhow::Result<()>{
 
         let width = Some(640 as usize);
         let height: Option<usize> = Some(480 as usize);
@@ -116,7 +116,7 @@ mod tests {
     }
 
     #[test]
-    fn test_encode_prompt() -> anyhow::Result<()>{
+    fn stable_diffusion_encode_prompt() -> anyhow::Result<()>{
         let prompt = "Test sentence";
 
         let width = Some(640 as usize);
@@ -132,7 +132,7 @@ mod tests {
     }
 
     #[test]
-    fn test_get_embedding_model() -> anyhow::Result<()>{
+    fn stable_diffusion_get_embedding_model() -> anyhow::Result<()>{
 
         let width = Some(640 as usize);
         let height: Option<usize> = Some(480 as usize);
@@ -145,7 +145,7 @@ mod tests {
     }
 
     #[test]
-    fn test_get_embeddings() -> anyhow::Result<()>{
+    fn stable_diffusion_get_embeddings() -> anyhow::Result<()>{
 
         let prompt: &str = "Test sentence";
         let uncond_prompt = "";
