@@ -2,7 +2,6 @@ use std::string::ToString;
 
 
 struct Prompt {
-    subject: String,
     medium: Option<String>,
     style: Option<String>,    
     color: Option<String>,
@@ -19,10 +18,9 @@ impl Prompt {
 
 impl ToString for Prompt {
     fn to_string(&self) -> String {
-        format!("{} {} {} {} {}", 
+        format!("{} {} cat {} {}", 
             self.style.as_ref().map_or_else(String::default, |s| s.to_string()), 
             self.color.as_ref().map_or_else(String::default, |s| s.to_string()), 
-            self.subject, 
             self.medium.as_ref().map_or_else(String::default, |s| s.to_string()),
             self.details.as_ref().map_or_else(String::default, |s| s.to_string()))
     }
@@ -30,7 +28,6 @@ impl ToString for Prompt {
 
 #[derive(Default)]
 pub struct PromptBuilder {
-    subject: String,
     medium: Option<String>,
     style: Option<String>,    
     color: Option<String>,
@@ -39,9 +36,8 @@ pub struct PromptBuilder {
 
 impl PromptBuilder {
 
-    pub fn new(subject: &str) -> PromptBuilder{
+    pub fn new() -> PromptBuilder{
         PromptBuilder {
-            subject: subject.to_string(),
             medium: None,
             style: None,
             color: None,
@@ -71,7 +67,6 @@ impl PromptBuilder {
 
     pub fn build(self) -> Prompt {
         Prompt {
-            subject: self.subject,
             medium: self.medium,
             style: self.style,
             color: self.color,
@@ -87,7 +82,7 @@ mod tests {
 
     #[test]
     fn prompt_medium(){
-        let prompt_builder = PromptBuilder::new("cat");
+        let prompt_builder = PromptBuilder::new();
         let medium = prompt_builder.set_medium("photograph").medium;
 
         assert_eq!("photograph", medium.unwrap());
@@ -95,7 +90,7 @@ mod tests {
 
     #[test]
     fn prompt_style(){
-        let prompt_builder = PromptBuilder::new("cat");
+        let prompt_builder = PromptBuilder::new();
         let style = prompt_builder.set_style("pixel-art").style;
 
         assert_eq!("pixel-art", style.unwrap());
@@ -103,7 +98,7 @@ mod tests {
 
     #[test]
     fn prompt_set_color(){
-        let prompt_builder = PromptBuilder::new("cat");
+        let prompt_builder = PromptBuilder::new();
         let color = prompt_builder.set_color("silver").color;
 
         assert_eq!("silver", color.unwrap());
@@ -111,27 +106,20 @@ mod tests {
 
     #[test]
     fn prompt_set_details(){
-        let prompt_builder = PromptBuilder::new("cat");
+        let prompt_builder = PromptBuilder::new();
         let details = prompt_builder.set_details("stylish, sublime").details;
 
         assert_eq!("stylish, sublime", details.unwrap());
     }
 
-    #[test]
-    fn prompt_set_subject(){
-        let prompt_builder = PromptBuilder::new("cat");
-        
-        assert_eq!("cat", prompt_builder.subject);
-    }
 
     #[test]
     fn prompt_build(){
 
-        let prompt_builder = PromptBuilder::new("cat");
+        let prompt_builder = PromptBuilder::new();
 
         let prompt = prompt_builder.set_style("dark fantasy").set_color("silver").set_medium("oil painting").set_details("high quality").build();
 
-        assert_eq!(prompt.subject, "cat");
         assert_eq!(prompt.medium.unwrap(), "oil painting");
         assert_eq!(prompt.style.unwrap(), "dark fantasy");
         assert_eq!(prompt.color.unwrap(), "silver");
@@ -140,7 +128,7 @@ mod tests {
 
     #[test]
     fn prompt_to_string(){
-        let prompt_builder = PromptBuilder::new("cat");
+        let prompt_builder = PromptBuilder::new();
 
         let prompt = prompt_builder.set_style("dark fantasy").set_color("silver").set_medium("oil painting").set_details("high quality").build();
 
