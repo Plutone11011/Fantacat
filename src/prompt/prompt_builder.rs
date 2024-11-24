@@ -1,3 +1,4 @@
+use std::string::ToString;
 
 
 struct Prompt {
@@ -14,6 +15,17 @@ impl Prompt {
         PromptBuilder::default()
     }
 
+}
+
+impl ToString for Prompt {
+    fn to_string(&self) -> String {
+        format!("{} {} {} {} {}", 
+            self.style.as_ref().map_or_else(String::default, |s| s.to_string()), 
+            self.color.as_ref().map_or_else(String::default, |s| s.to_string()), 
+            self.subject, 
+            self.medium.as_ref().map_or_else(String::default, |s| s.to_string()),
+            self.details.as_ref().map_or_else(String::default, |s| s.to_string()))
+    }
 }
 
 #[derive(Default)]
@@ -124,5 +136,14 @@ mod tests {
         assert_eq!(prompt.style.unwrap(), "dark fantasy");
         assert_eq!(prompt.color.unwrap(), "silver");
         assert_eq!(prompt.details.unwrap(), "high quality");
+    }
+
+    #[test]
+    fn prompt_to_string(){
+        let prompt_builder = PromptBuilder::new("cat");
+
+        let prompt = prompt_builder.set_style("dark fantasy").set_color("silver").set_medium("oil painting").set_details("high quality").build();
+
+        assert_eq!("dark fantasy silver cat oil painting high quality".to_string(), prompt.to_string());
     }
 }
