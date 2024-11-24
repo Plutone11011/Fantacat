@@ -1,10 +1,12 @@
 use std::string::ToString;
 
+use super::prompt_entities::{Color, Medium, Style};
+
 
 struct Prompt {
-    medium: Option<String>,
-    style: Option<String>,    
-    color: Option<String>,
+    medium: Option<Medium>,
+    style: Option<Style>,    
+    color: Option<Color>,
     details: Option<String>
 }
 
@@ -28,9 +30,9 @@ impl ToString for Prompt {
 
 #[derive(Default)]
 pub struct PromptBuilder {
-    medium: Option<String>,
-    style: Option<String>,    
-    color: Option<String>,
+    medium: Option<Medium>,
+    style: Option<Style>,    
+    color: Option<Color>,
     details: Option<String>
 }
 
@@ -45,18 +47,18 @@ impl PromptBuilder {
         }
     }
 
-    pub fn set_medium(mut self, medium: &str) -> Self{
-        self.medium = Some(medium.to_string());
+    pub fn set_medium(mut self, medium: Medium) -> Self{
+        self.medium = Some(medium);
         self
     }
 
-    pub fn set_style(mut self, style: &str) -> Self{
-        self.style = Some(style.to_string());
+    pub fn set_style(mut self, style: Style) -> Self{
+        self.style = Some(style);
         self
     }
 
-    pub fn set_color(mut self, color: &str) -> Self{
-        self.color = Some(color.to_string());
+    pub fn set_color(mut self, color: Color) -> Self{
+        self.color = Some(color);
         self
     }
 
@@ -82,26 +84,32 @@ mod tests {
 
     #[test]
     fn prompt_medium(){
-        let prompt_builder = PromptBuilder::new();
-        let medium = prompt_builder.set_medium("photograph").medium;
-
-        assert_eq!("photograph", medium.unwrap());
+        let builder = PromptBuilder::new();
+        let test_medium = Medium::Photography;
+        
+        let result = builder.set_medium(test_medium.clone());
+        
+        assert_eq!(result.medium, Some(test_medium));
     }
 
     #[test]
     fn prompt_style(){
-        let prompt_builder = PromptBuilder::new();
-        let style = prompt_builder.set_style("pixel-art").style;
-
-        assert_eq!("pixel-art", style.unwrap());
+        let builder = PromptBuilder::new();
+        let test_style = Style::Hyperrealist;
+        
+        let result = builder.set_style(test_style.clone());
+        
+        assert_eq!(result.style, Some(test_style));
     }
 
     #[test]
     fn prompt_set_color(){
-        let prompt_builder = PromptBuilder::new();
-        let color = prompt_builder.set_color("silver").color;
-
-        assert_eq!("silver", color.unwrap());
+        let builder = PromptBuilder::new();
+        let test_color = Color::Silver;
+        
+        let result = builder.set_color(test_color.clone());
+        
+        assert_eq!(result.color, Some(test_color));
     }
 
     #[test]
@@ -114,24 +122,14 @@ mod tests {
 
 
     #[test]
-    fn prompt_build(){
-
-        let prompt_builder = PromptBuilder::new();
-
-        let prompt = prompt_builder.set_style("dark fantasy").set_color("silver").set_medium("oil painting").set_details("high quality").build();
-
-        assert_eq!(prompt.medium.unwrap(), "oil painting");
-        assert_eq!(prompt.style.unwrap(), "dark fantasy");
-        assert_eq!(prompt.color.unwrap(), "silver");
-        assert_eq!(prompt.details.unwrap(), "high quality");
-    }
-
-    #[test]
     fn prompt_to_string(){
         let prompt_builder = PromptBuilder::new();
 
-        let prompt = prompt_builder.set_style("dark fantasy").set_color("silver").set_medium("oil painting").set_details("high quality").build();
-
-        assert_eq!("dark fantasy silver cat oil painting high quality".to_string(), prompt.to_string());
+        let prompt = prompt_builder.set_style(Style::Hyperrealist)
+                                            .set_color(Color::Red)
+                                            .set_medium(Medium::OilPainting)
+                                            .set_details("high quality")
+                                            .build();
+        assert_eq!("hyper realist red cat oil painting high quality".to_string(), prompt.to_string());
     }
 }
