@@ -1,12 +1,13 @@
 use std::string::ToString;
 
-use super::prompt_entities::{Color, Medium, Style};
+use super::prompt_entities::{Color, Medium, Style, Breed};
 
 
-struct Prompt {
+pub struct Prompt {
     medium: Option<Medium>,
     style: Option<Style>,    
     color: Option<Color>,
+    breed: Option<Breed>,
     details: Option<String>
 }
 
@@ -20,9 +21,10 @@ impl Prompt {
 
 impl ToString for Prompt {
     fn to_string(&self) -> String {
-        format!("{} {} cat {} {}", 
+        format!("{} {} {} cat {} {}", 
             self.style.as_ref().map_or_else(String::default, |s| s.to_string()), 
-            self.color.as_ref().map_or_else(String::default, |s| s.to_string()), 
+            self.color.as_ref().map_or_else(String::default, |s| s.to_string()),
+            self.breed.as_ref().map_or_else(String::default, |s| s.to_string()), 
             self.medium.as_ref().map_or_else(String::default, |s| s.to_string()),
             self.details.as_ref().map_or_else(String::default, |s| s.to_string()))
     }
@@ -33,19 +35,11 @@ pub struct PromptBuilder {
     medium: Option<Medium>,
     style: Option<Style>,    
     color: Option<Color>,
+    breed: Option<Breed>,
     details: Option<String>
 }
 
 impl PromptBuilder {
-
-    pub fn new() -> PromptBuilder{
-        PromptBuilder {
-            medium: None,
-            style: None,
-            color: None,
-            details: None
-        }
-    }
 
     pub fn set_medium(mut self, medium: Medium) -> Self{
         self.medium = Some(medium);
@@ -62,6 +56,11 @@ impl PromptBuilder {
         self
     }
 
+    pub fn set_breed(mut self, breed: Breed) -> Self{
+        self.breed = Some(breed);
+        self
+    }
+
     pub fn set_details(mut self, details: &str) -> Self{
         self.details = Some(details.to_string());
         self
@@ -71,6 +70,7 @@ impl PromptBuilder {
         Prompt {
             medium: self.medium,
             style: self.style,
+            breed: self.breed,
             color: self.color,
             details: self.details
         }
@@ -84,7 +84,7 @@ mod tests {
 
     #[test]
     fn prompt_medium(){
-        let builder = PromptBuilder::new();
+        let builder = PromptBuilder::default();
         let test_medium = Medium::Photography;
         
         let result = builder.set_medium(test_medium.clone());
@@ -94,7 +94,7 @@ mod tests {
 
     #[test]
     fn prompt_style(){
-        let builder = PromptBuilder::new();
+        let builder = PromptBuilder::default();
         let test_style = Style::Hyperrealist;
         
         let result = builder.set_style(test_style.clone());
@@ -104,7 +104,7 @@ mod tests {
 
     #[test]
     fn prompt_set_color(){
-        let builder = PromptBuilder::new();
+        let builder = PromptBuilder::default();
         let test_color = Color::Silver;
         
         let result = builder.set_color(test_color.clone());
@@ -113,8 +113,20 @@ mod tests {
     }
 
     #[test]
+    fn prompt_set_breed(){
+        let builder = PromptBuilder::default();
+        let test_breed = Breed::MaineCoon;
+
+        let result = builder.set_breed(test_breed.clone());
+
+        assert_eq!(result.breed, Some(test_breed));
+
+        
+    }
+
+    #[test]
     fn prompt_set_details(){
-        let prompt_builder = PromptBuilder::new();
+        let prompt_builder = PromptBuilder::default();
         let details = prompt_builder.set_details("stylish, sublime").details;
 
         assert_eq!("stylish, sublime", details.unwrap());
@@ -123,13 +135,14 @@ mod tests {
 
     #[test]
     fn prompt_to_string(){
-        let prompt_builder = PromptBuilder::new();
+        let prompt_builder = PromptBuilder::default();
 
         let prompt = prompt_builder.set_style(Style::Hyperrealist)
+                                            .set_breed(Breed::MaineCoon)
                                             .set_color(Color::Red)
                                             .set_medium(Medium::OilPainting)
                                             .set_details("high quality")
                                             .build();
-        assert_eq!("hyper realist red cat oil painting high quality".to_string(), prompt.to_string());
+        assert_eq!("hyper realist red maine coon cat oil painting high quality".to_string(), prompt.to_string());
     }
 }

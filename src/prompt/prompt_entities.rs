@@ -76,3 +76,25 @@ impl Display for Style {
         }
     }
 }
+
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum Breed {
+    MaineCoon,
+    Abyssinian,
+    Persian,
+    Siamese,
+    Bengal
+}
+
+impl Display for Breed {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match *self {
+            Breed::MaineCoon => write!(f, "maine coon"),
+            Breed::Abyssinian => write!(f, "abyssinian"),
+            Breed::Bengal => write!(f, "bengal"),
+            Breed::Persian => write!(f, "persian"),
+            Breed::Siamese => write!(f, "siamese")
+        }
+    }
+}
