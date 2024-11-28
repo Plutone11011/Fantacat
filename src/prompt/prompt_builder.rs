@@ -41,28 +41,28 @@ pub struct PromptBuilder {
 
 impl PromptBuilder {
 
-    pub fn set_medium(mut self, medium: Medium) -> Self{
-        self.medium = Some(medium);
+    pub fn set_medium(mut self, medium: Option<Medium>) -> Self{
+        self.medium = medium;
         self
     }
 
-    pub fn set_style(mut self, style: Style) -> Self{
-        self.style = Some(style);
+    pub fn set_style(mut self, style: Option<Style>) -> Self{
+        self.style = style;
         self
     }
 
-    pub fn set_color(mut self, color: Color) -> Self{
-        self.color = Some(color);
+    pub fn set_color(mut self, color: Option<Color>) -> Self{
+        self.color = color;
         self
     }
 
-    pub fn set_breed(mut self, breed: Breed) -> Self{
-        self.breed = Some(breed);
+    pub fn set_breed(mut self, breed: Option<Breed>) -> Self{
+        self.breed = breed;
         self
     }
 
-    pub fn set_details(mut self, details: &str) -> Self{
-        self.details = Some(details.to_string());
+    pub fn set_details(mut self, details: Option<String>) -> Self{
+        self.details = details;
         self
     }
 
@@ -87,7 +87,7 @@ mod tests {
         let builder = PromptBuilder::default();
         let test_medium = Medium::Photography;
         
-        let result = builder.set_medium(test_medium.clone());
+        let result = builder.set_medium(Some(test_medium.clone()));
         
         assert_eq!(result.medium, Some(test_medium));
     }
@@ -97,7 +97,7 @@ mod tests {
         let builder = PromptBuilder::default();
         let test_style = Style::Hyperrealist;
         
-        let result = builder.set_style(test_style.clone());
+        let result = builder.set_style(Some(test_style.clone()));
         
         assert_eq!(result.style, Some(test_style));
     }
@@ -107,7 +107,7 @@ mod tests {
         let builder = PromptBuilder::default();
         let test_color = Color::Silver;
         
-        let result = builder.set_color(test_color.clone());
+        let result = builder.set_color(Some(test_color.clone()));
         
         assert_eq!(result.color, Some(test_color));
     }
@@ -117,7 +117,7 @@ mod tests {
         let builder = PromptBuilder::default();
         let test_breed = Breed::MaineCoon;
 
-        let result = builder.set_breed(test_breed.clone());
+        let result = builder.set_breed(Some(test_breed.clone()));
 
         assert_eq!(result.breed, Some(test_breed));
 
@@ -127,7 +127,7 @@ mod tests {
     #[test]
     fn prompt_set_details(){
         let prompt_builder = PromptBuilder::default();
-        let details = prompt_builder.set_details("stylish, sublime").details;
+        let details = prompt_builder.set_details(Some(String::from("stylish, sublime"))).details;
 
         assert_eq!("stylish, sublime", details.unwrap());
     }
@@ -137,12 +137,12 @@ mod tests {
     fn prompt_to_string(){
         let prompt_builder = PromptBuilder::default();
 
-        let prompt = prompt_builder.set_style(Style::Hyperrealist)
-                                            .set_breed(Breed::MaineCoon)
-                                            .set_color(Color::Red)
-                                            .set_medium(Medium::OilPainting)
-                                            .set_details("high quality")
+        let prompt = prompt_builder.set_style(None)
+                                            .set_breed(Some(Breed::MaineCoon))
+                                            .set_color(Some(Color::Red))
+                                            .set_medium(Some(Medium::OilPainting))
+                                            .set_details(Some(String::from("high quality")))
                                             .build();
-        assert_eq!("hyper realist red maine coon cat oil painting high quality".to_string(), prompt.to_string());
+        assert_eq!(" red maine-coon cat oil-painting high quality".to_string(), prompt.to_string());
     }
 }

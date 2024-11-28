@@ -3,6 +3,7 @@ use clap::Parser;
 use anyhow::Result;
 use candle_transformers::models::stable_diffusion as sd;
 use candle_core::{Tensor, D};
+use prompt::{prompt_builder, prompt_entities::Medium};
 
 // use hf_hub::api::tokio::Api;
 // use candle_core::Device;
@@ -14,11 +15,7 @@ mod prompt;
 #[command(version, about, long_about = None)]
 struct Args {
     /// prompt request for model
-    #[arg(short='p', long="prompt", default_value_t=String::from("Red cat with white and red stripes (hd, realistic, high-def)."))]
-    prompt: String,
-
-    #[arg(long="uncond_prompt", default_value_t=String::from(""))]
-    uncond_prompt: String,
+    
 
     /// Number of images to generate
     #[arg(long="n_images", default_value_t = 1)]
@@ -39,6 +36,21 @@ struct Args {
 
     #[arg(short='g', long="guidance_scale")]
     guidance_scale: Option<f64>,
+
+    #[arg(long="medium")]
+    medium: Option<prompt::prompt_entities::Medium>,
+
+    #[arg(long="breed")]
+    breed: Option<prompt::prompt_entities::Breed>,
+
+    #[arg(long="style")]
+    style: Option<prompt::prompt_entities::Style>,
+
+    #[arg(long="color")]
+    color: Option<prompt::prompt_entities::Color>,
+
+    #[arg(long="details")]
+    details: Option<String>,
 
 }
 
@@ -72,9 +84,21 @@ fn run_diffusion(args: Args) -> Result<()> {
     //         StableDiffusionVersion::Turbo => 0.,
     //     },
     // };
+    let color = args.color;
+    let style = args.style;
+    let medium = args.medium;
+    let breed = args.breed;
+    let details = args.details;
+    let prompt_builder = prompt::prompt_builder::PromptBuilder::default();
+    let prompt = prompt_builder.set_breed(breed)
+                                        .set_color(color)
+                                        .set_details(details)
+                                        .set_medium(medium)
+                                        .set_style(style)
+                                        .build();
 
-    let prompt = args.prompt ;
-    let uncond_prompt = args.uncond_prompt ;
+    let prompt = prompt.to_string();
+    let uncond_prompt = "" ;
     println!("Generate an image for prompt: {}", prompt);
     let vae_scale: f64 = 0.18215;
     // match sd_version {
