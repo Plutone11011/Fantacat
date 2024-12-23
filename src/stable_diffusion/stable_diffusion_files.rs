@@ -11,6 +11,45 @@ pub enum StableDiffusionFiles{
     Vae
 }
 
+trait ModelFileBuilder {
+    fn get_repo(&self, sd_file: StableDiffusionFiles) -> &str;
+    fn get_path(&self, sd_file: StableDiffusionFiles, use_f16: bool) -> &str;
+    fn get(&self, filename: Option<String>, use_f16: bool) -> Result<std::path::PathBuf>;
+}
+
+pub struct StableDiffusion1_5 {}
+
+impl StableDiffusion1_5 {
+    const REPO_TOKENIZER: &str = "openai/clip-vit-base-patch32";
+    const REPO_CLIP: &str = "stable-diffusion-v1-5/stable-diffusion-v1-5";
+    const REPO_UNET: &str = "stable-diffusion-v1-5/stable-diffusion-v1-5";
+    const REPO_VAE: &str = "stable-diffusion-v1-5/stable-diffusion-v1-5";
+
+    const MODELFILE_TOKENIZER: &str = "tokenizer.json";
+    const MODELFILE_CLIP: &str = "text_encoder/model.safetensors";
+    const MODELFILE_CLIP_FP16: &str = "text_encoder/model.fp16.safetensors";
+    const MODELFILE_UNET: &str = "unet/diffusion_pytorch_model.safetensors";
+    const MODELFILE_UNET_FP16: &str = "unet/diffusion_pytorch_model.fp16.safetensors";
+    const MODELFILE_VAE: &str = "vae/diffusion_pytorch_model.safetensors";
+    const MODELFILE_VAE_FP16: &str = "vae/diffusion_pytorch_model.fp16.safetensors";
+
+}
+
+impl ModelFileBuilder for StableDiffusion1_5 {
+    fn get_repo(&self, sd_file: StableDiffusionFiles) -> &str {
+        todo!()
+    }
+
+    fn get_path(&self, sd_file: StableDiffusionFiles, use_f16: bool) -> &str {
+        todo!()
+    }
+
+    fn get(&self, filename: Option<String>, use_f16: bool) -> Result<std::path::PathBuf> {
+        todo!()
+    }
+}
+
+
 impl StableDiffusionFiles{
 
     pub fn get_repo(&self) -> &str{
