@@ -6,14 +6,15 @@ use candle_core::{Device, DType};
 
 
 use crate::stable_diffusion::stable_diffusion_files;
+use crate::stable_diffusion::stable_diffusion_files::ModelFileBuild;
 
 const CLIP_SPECIAL_TOKEN: &str = "<|endoftext|>";
 
 pub fn get_tokenizer(tokenizer_file: Option<String>) -> anyhow::Result<Tokenizer>{
 
-    let tokenizer_sd = stable_diffusion_files::StableDiffusionFiles::Tokenizer;
-
-    let tokenizer_file = tokenizer_sd.get(tokenizer_file, true)?;
+    let tokenizer = stable_diffusion_files::StableDiffusionFiles::Tokenizer;
+    let sd_version = stable_diffusion_files::StableDiffusion1_5{};
+    let tokenizer_file = sd_version.get(&tokenizer, tokenizer_file, true)?;
 
     let tokenizer = Tokenizer::from_file(tokenizer_file).map_err(anyhow::Error::msg)?;
 
@@ -22,9 +23,9 @@ pub fn get_tokenizer(tokenizer_file: Option<String>) -> anyhow::Result<Tokenizer
 }
 
 pub fn get_embedding_model(embedding_file: Option<String>, stable_diffusion_config: &stable_diffusion::StableDiffusionConfig, device: &Device) -> anyhow::Result<stable_diffusion::clip::ClipTextTransformer>{
-    let clip_sd = stable_diffusion_files::StableDiffusionFiles::Clip;
-
-    let clip_weights_file = clip_sd.get(embedding_file, true)?;
+    let clip = stable_diffusion_files::StableDiffusionFiles::Clip;
+    let sd_version = stable_diffusion_files::StableDiffusion1_5{};
+    let clip_weights_file = sd_version.get(&clip, embedding_file, true)?;
 
     let text_model = stable_diffusion::build_clip_transformer(&stable_diffusion_config.clip, clip_weights_file, device, DType::F16)?;
 

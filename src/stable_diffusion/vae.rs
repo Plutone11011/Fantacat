@@ -3,12 +3,13 @@ use candle_transformers::models::stable_diffusion::{self, vae::AutoEncoderKL};
 use candle_core::{Device, DType};
 
 use crate::stable_diffusion::stable_diffusion_files;
+use crate::stable_diffusion::stable_diffusion_files::ModelFileBuild;
 
 pub fn get_vae(vae_file: Option<String>, stable_diffusion_config: &stable_diffusion::StableDiffusionConfig, device: &Device, dtype: DType) -> anyhow::Result<AutoEncoderKL>{
 
-    let vae_sd = stable_diffusion_files::StableDiffusionFiles::Vae;
-
-    let vae_weights_file = vae_sd.get(vae_file, true)?;
+    let vae = stable_diffusion_files::StableDiffusionFiles::Vae;
+    let sd_version = stable_diffusion_files::StableDiffusion1_5{};
+    let vae_weights_file = sd_version.get(&vae, vae_file, true)?;
 
     let vae = stable_diffusion_config.build_vae(vae_weights_file, &device, dtype)?;
 
