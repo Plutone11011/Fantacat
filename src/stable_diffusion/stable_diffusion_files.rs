@@ -2,6 +2,8 @@ use std;
 use hf_hub::api::sync::Api;
 use anyhow::Result;
 
+use crate::stable_diffusion::constants;
+
 #[derive(Debug)]
 pub enum StableDiffusionFiles{
 
@@ -13,66 +15,35 @@ pub enum StableDiffusionFiles{
 
 pub trait ModelFileBuild {
     fn get_repo(&self, sd_file: &StableDiffusionFiles) -> &str;
-    fn get_path(&self, sd_file: &StableDiffusionFiles, use_f16: bool) -> &str;
-    fn get(&self, sd_file: &StableDiffusionFiles, filename: Option<String>, use_f16: bool) -> Result<std::path::PathBuf>;
-}
-
-pub struct StableDiffusion1_5 {}
-
-impl StableDiffusion1_5 {
-    const REPO_TOKENIZER: &str = "openai/clip-vit-base-patch32";
-    const REPO_CLIP: &str = "stable-diffusion-v1-5/stable-diffusion-v1-5";
-    const REPO_UNET: &str = "stable-diffusion-v1-5/stable-diffusion-v1-5";
-    const REPO_VAE: &str = "stable-diffusion-v1-5/stable-diffusion-v1-5";
-
-    const MODELFILE_TOKENIZER: &str = "tokenizer.json";
-    const MODELFILE_CLIP: &str = "text_encoder/model.safetensors";
-    const MODELFILE_CLIP_FP16: &str = "text_encoder/model.fp16.safetensors";
-    const MODELFILE_UNET: &str = "unet/diffusion_pytorch_model.safetensors";
-    const MODELFILE_UNET_FP16: &str = "unet/diffusion_pytorch_model.fp16.safetensors";
-    const MODELFILE_VAE: &str = "vae/diffusion_pytorch_model.safetensors";
-    const MODELFILE_VAE_FP16: &str = "vae/diffusion_pytorch_model.fp16.safetensors";
-
-}
-
-impl ModelFileBuild for StableDiffusion1_5 {
-    fn get_repo(&self, sd_file: &StableDiffusionFiles) -> &str {
-        match sd_file {
-            StableDiffusionFiles::Tokenizer => StableDiffusion1_5::REPO_TOKENIZER,
-            StableDiffusionFiles::Clip|StableDiffusionFiles::Unet|StableDiffusionFiles::Vae => StableDiffusion1_5::REPO_CLIP
-        }
-    }
-
     fn get_path(&self, sd_file: &StableDiffusionFiles, use_f16: bool) -> &str {
         match sd_file {
-            StableDiffusionFiles::Tokenizer => StableDiffusion1_5::MODELFILE_TOKENIZER,
+            StableDiffusionFiles::Tokenizer => constants::MODELFILE_TOKENIZER,
             StableDiffusionFiles::Clip => {
                 if use_f16 {
-                    StableDiffusion1_5::MODELFILE_CLIP_FP16
+                    constants::MODELFILE_CLIP_FP16
                 }
                 else {
-                    StableDiffusion1_5::MODELFILE_CLIP
+                    constants::MODELFILE_CLIP
                 }
             },
             StableDiffusionFiles::Unet => {
                 if use_f16 {
-                    StableDiffusion1_5::MODELFILE_UNET_FP16
+                    constants::MODELFILE_UNET_FP16
                 }
                 else {
-                    StableDiffusion1_5::MODELFILE_UNET
+                    constants::MODELFILE_UNET
                 }
             },
             StableDiffusionFiles::Vae => {
                 if use_f16 {
-                    StableDiffusion1_5::MODELFILE_VAE_FP16
+                    constants::MODELFILE_VAE_FP16
                 }
                 else {
-                    StableDiffusion1_5::MODELFILE_VAE
+                    constants::MODELFILE_VAE
                 }
             }
         }
     }
-
     fn get(&self, sd_file: &StableDiffusionFiles, filename: Option<String>, use_f16: bool) -> Result<std::path::PathBuf> {
         match filename {
             Some(filename) => Ok(std::path::PathBuf::from(filename)),
@@ -87,8 +58,28 @@ impl ModelFileBuild for StableDiffusion1_5 {
     }
 }
 
+pub struct StableDiffusion1_5 {}
 
 
+impl ModelFileBuild for StableDiffusion1_5 {
+    fn get_repo(&self, sd_file: &StableDiffusionFiles) -> &str {
+        match sd_file {
+            StableDiffusionFiles::Tokenizer => constants::REPO_TOKENIZER,
+            StableDiffusionFiles::Clip|StableDiffusionFiles::Unet|StableDiffusionFiles::Vae => constants::REPO_1_5
+        }
+    }
+}
+
+pub struct StableDiffusion2_1{}
+
+impl ModelFileBuild for StableDiffusion2_1 {
+    fn get_repo(&self, sd_file: &StableDiffusionFiles) -> &str {
+        match sd_file {
+            StableDiffusionFiles::Tokenizer => constants::REPO_TOKENIZER,
+            StableDiffusionFiles::Clip|StableDiffusionFiles::Unet|StableDiffusionFiles::Vae => constants::REPO_2_1
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
