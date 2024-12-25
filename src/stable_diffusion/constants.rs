@@ -3,7 +3,7 @@
 pub const REPO_TOKENIZER: &str = "openai/clip-vit-base-patch32";
 pub const REPO_TOKENIZER_X1TURBO: &str = "openai/clip-vit-large-patch14";
 pub const REPO_TOKENIZER2: &str = "laion/CLIP-ViT-bigG-14-laion2B-39B-b160k";
-pub const REPO_1_5: &str = "runwayml/stable-diffusion-v1-5";
+pub const REPO_1_5: &str = "stable-diffusion-v1-5/stable-diffusion-v1-5";
 pub const REPO_2_1: &str = "stabilityai/stable-diffusion-2-1";
 pub const REPO_X1: &str = "stabilityai/stable-diffusion-xl-base-1.0";
 pub const REPO_TURBO: &str = "stabilityai/sdxl-turbo";

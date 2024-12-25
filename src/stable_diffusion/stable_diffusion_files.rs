@@ -15,41 +15,38 @@ pub enum StableDiffusionFiles{
 
 pub trait ModelFileBuild {
     fn get_repo(&self, sd_file: &StableDiffusionFiles) -> &str;
-    fn get_path(&self, sd_file: &StableDiffusionFiles, use_f16: bool) -> &str {
-        match sd_file {
-            StableDiffusionFiles::Tokenizer => constants::MODELFILE_TOKENIZER,
-            StableDiffusionFiles::Clip => {
-                if use_f16 {
-                    constants::MODELFILE_CLIP_FP16
-                }
-                else {
-                    constants::MODELFILE_CLIP
-                }
-            },
-            StableDiffusionFiles::Unet => {
-                if use_f16 {
-                    constants::MODELFILE_UNET_FP16
-                }
-                else {
-                    constants::MODELFILE_UNET
-                }
-            },
-            StableDiffusionFiles::Vae => {
-                if use_f16 {
-                    constants::MODELFILE_VAE_FP16
-                }
-                else {
-                    constants::MODELFILE_VAE
-                }
-            }
-        }
+    fn get_tokenizer_filepath(&self) -> &str {
+        constants::MODELFILE_TOKENIZER
+    }
+
+    fn get_clip_filepath(&self, use_f16: bool) -> &str {
+        if use_f16 { constants::MODELFILE_CLIP_FP16 } else { constants::MODELFILE_CLIP }
+    }
+
+    fn get_unet_filepath(&self, use_f16: bool) -> &str {
+        if use_f16 { constants::MODELFILE_UNET_FP16 } else { constants::MODELFILE_UNET }
+    }
+
+    fn get_vae_filepath(&self, use_f16: bool) -> &str {
+        if use_f16 { constants::MODELFILE_VAE_FP16 } else { constants::MODELFILE_VAE }
     }
     fn get(&self, sd_file: &StableDiffusionFiles, filename: Option<String>, use_f16: bool) -> Result<std::path::PathBuf> {
         match filename {
             Some(filename) => Ok(std::path::PathBuf::from(filename)),
             None => {
                 let repo = self.get_repo(sd_file);
-                let filepath = self.get_path(sd_file, use_f16);
+                let filepath = match sd_file {
+                    StableDiffusionFiles::Tokenizer => self.get_tokenizer_filepath(),
+                    StableDiffusionFiles::Clip => {
+                        self.get_clip_filepath(use_f16)
+                    },
+                    StableDiffusionFiles::Unet => {
+                        self.get_unet_filepath(use_f16)
+                    },
+                    StableDiffusionFiles::Vae => {
+                        self.get_vae_filepath(use_f16)
+                    }
+                };
 
                 let filename = Api::new()?.model(repo.to_string()).get(filepath)?;
                 Ok(filename)
@@ -68,6 +65,8 @@ impl ModelFileBuild for StableDiffusion1_5 {
             StableDiffusionFiles::Clip|StableDiffusionFiles::Unet|StableDiffusionFiles::Vae => constants::REPO_1_5
         }
     }
+
+    
 }
 
 pub struct StableDiffusion2_1{}
@@ -81,6 +80,10 @@ impl ModelFileBuild for StableDiffusion2_1 {
     }
 }
 
+
+
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -90,7 +93,7 @@ mod tests {
         let model_file = StableDiffusionFiles::Unet;
         let sd_version = StableDiffusion1_5{};
         let unet_repo = sd_version.get_repo(&model_file);
-        let unet_path = sd_version.get_path(&model_file, true);
+        let unet_path = sd_version.get_unet_filepath(true);
         
         assert_eq!(unet_repo, "stable-diffusion-v1-5/stable-diffusion-v1-5");
         assert_eq!(unet_path, "unet/diffusion_pytorch_model.fp16.safetensors");
@@ -101,7 +104,7 @@ mod tests {
         let model_file = StableDiffusionFiles::Vae;
         let sd_version = StableDiffusion1_5{};
         let vae_repo = sd_version.get_repo(&model_file);
-        let vae_path = sd_version.get_path(&model_file, false);
+        let vae_path = sd_version.get_vae_filepath(false);
         
         assert_eq!(vae_repo, "stable-diffusion-v1-5/stable-diffusion-v1-5");
         assert_eq!(vae_path, "vae/diffusion_pytorch_model.safetensors");
@@ -111,7 +114,7 @@ mod tests {
         let model_file = StableDiffusionFiles::Tokenizer;
         let sd_version = StableDiffusion1_5{};
         let tokenizer_repo = sd_version.get_repo(&model_file);
-        let tokenizer_path = sd_version.get_path(&model_file,true);
+        let tokenizer_path = sd_version.get_tokenizer_filepath();
         
         assert_eq!(tokenizer_repo, "openai/clip-vit-base-patch32");
         assert_eq!(tokenizer_path, "tokenizer.json");
@@ -121,7 +124,7 @@ mod tests {
         let model_file = StableDiffusionFiles::Clip;
         let sd_version = StableDiffusion1_5{};
         let encoder_repo = sd_version.get_repo(&model_file);
-        let encoder_path = sd_version.get_path(&model_file, true);
+        let encoder_path = sd_version.get_clip_filepath(true);
         
         assert_eq!(encoder_repo, "stable-diffusion-v1-5/stable-diffusion-v1-5");
         assert_eq!(encoder_path, "text_encoder/model.fp16.safetensors");
