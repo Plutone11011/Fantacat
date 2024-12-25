@@ -1,4 +1,5 @@
 use std;
+use candle_transformers::models::based::Model;
 use hf_hub::api::sync::Api;
 use anyhow::Result;
 
@@ -14,7 +15,10 @@ pub enum StableDiffusionFiles{
 }
 
 pub trait ModelFileBuild {
-    fn get_repo(&self, sd_file: &StableDiffusionFiles) -> &str;
+    fn get_repo(&self, sd_file: &StableDiffusionFiles) -> &str{
+        self.get_repo_with_precision(sd_file, None)
+    }
+    fn get_repo_with_precision(&self, sd_file: &StableDiffusionFiles, use_f16: Option<bool>) -> &str;
     fn get_tokenizer_filepath(&self) -> &str {
         constants::MODELFILE_TOKENIZER
     }
@@ -34,7 +38,7 @@ pub trait ModelFileBuild {
         match filename {
             Some(filename) => Ok(std::path::PathBuf::from(filename)),
             None => {
-                let repo = self.get_repo(sd_file);
+                let repo = self.get_repo_with_precision(sd_file, Some(use_f16));
                 let filepath = match sd_file {
                     StableDiffusionFiles::Tokenizer => self.get_tokenizer_filepath(),
                     StableDiffusionFiles::Clip => {
@@ -59,7 +63,7 @@ pub struct StableDiffusion1_5 {}
 
 
 impl ModelFileBuild for StableDiffusion1_5 {
-    fn get_repo(&self, sd_file: &StableDiffusionFiles) -> &str {
+    fn get_repo_with_precision(&self, sd_file: &StableDiffusionFiles, _use_f16: Option<bool>) -> &str {
         match sd_file {
             StableDiffusionFiles::Tokenizer => constants::REPO_TOKENIZER,
             StableDiffusionFiles::Clip|StableDiffusionFiles::Unet|StableDiffusionFiles::Vae => constants::REPO_1_5
@@ -72,7 +76,7 @@ impl ModelFileBuild for StableDiffusion1_5 {
 pub struct StableDiffusion2_1{}
 
 impl ModelFileBuild for StableDiffusion2_1 {
-    fn get_repo(&self, sd_file: &StableDiffusionFiles) -> &str {
+    fn get_repo_with_precision(&self, sd_file: &StableDiffusionFiles, _use_f16: Option<bool>) -> &str {
         match sd_file {
             StableDiffusionFiles::Tokenizer => constants::REPO_TOKENIZER,
             StableDiffusionFiles::Clip|StableDiffusionFiles::Unet|StableDiffusionFiles::Vae => constants::REPO_2_1
@@ -81,6 +85,37 @@ impl ModelFileBuild for StableDiffusion2_1 {
 }
 
 
+pub struct StableDiffusionTurbo{}
+
+impl ModelFileBuild for StableDiffusionTurbo{
+    fn get_repo_with_precision(&self, sd_file: &StableDiffusionFiles, _use_f16: Option<bool>) -> &str {
+        match sd_file {
+            StableDiffusionFiles::Tokenizer => constants::REPO_TOKENIZER_X1TURBO,
+            StableDiffusionFiles::Clip|StableDiffusionFiles::Unet => constants::REPO_TURBO,
+            StableDiffusionFiles::Vae => if _use_f16.unwrap_or(false) {constants::REPO_VAE_X1TURBO_FP16} else {constants::REPO_TURBO}
+        }
+    }
+
+    fn get_vae_filepath(&self, use_f16: bool) -> &str {
+        if use_f16 { constants::MODELFILE_VAE_X1TURBO_FP16 } else { constants::MODELFILE_VAE }
+    }
+}
+
+pub struct StableDiffusionX1{}
+
+impl ModelFileBuild for StableDiffusionX1{
+    fn get_repo_with_precision(&self, sd_file: &StableDiffusionFiles, _use_f16: Option<bool>) -> &str {
+        match sd_file {
+            StableDiffusionFiles::Tokenizer => constants::REPO_TOKENIZER_X1TURBO,
+            StableDiffusionFiles::Clip|StableDiffusionFiles::Unet => constants::REPO_X1,
+            StableDiffusionFiles::Vae => if _use_f16.unwrap_or(false) {constants::REPO_VAE_X1TURBO_FP16} else {constants::REPO_TURBO}
+        }
+    }
+
+    fn get_vae_filepath(&self, use_f16: bool) -> &str {
+        if use_f16 { constants::MODELFILE_VAE_X1TURBO_FP16 } else { constants::MODELFILE_VAE }
+    }
+}
 
 
 
