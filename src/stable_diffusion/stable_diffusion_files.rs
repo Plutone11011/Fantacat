@@ -1,5 +1,4 @@
 use std;
-use candle_transformers::models::based::Model;
 use hf_hub::api::sync::Api;
 use anyhow::Result;
 
@@ -12,6 +11,14 @@ pub enum StableDiffusionFiles{
     Clip,
     Unet,
     Vae
+}
+
+#[derive(Debug, Clone, Copy, clap::ValueEnum, PartialEq, Eq)]
+pub enum StableDiffusionVersion {
+    V1_5,
+    V2_1,
+    Xl,
+    Turbo,
 }
 
 pub trait ModelFileBuild {
@@ -117,7 +124,14 @@ impl ModelFileBuild for StableDiffusionX1{
     }
 }
 
-
+pub fn create_sd_from_version(sd_version: &StableDiffusionVersion) -> Box<dyn ModelFileBuild>{
+    match sd_version {
+        StableDiffusionVersion::V1_5 => Box::new(StableDiffusion1_5{}),
+        StableDiffusionVersion::V2_1 =>  Box::new(StableDiffusion2_1{}),
+        StableDiffusionVersion::Turbo =>  Box::new(StableDiffusionTurbo{}),
+        StableDiffusionVersion::Xl =>  Box::new(StableDiffusionX1{})
+    }
+}
 
 #[cfg(test)]
 mod tests {

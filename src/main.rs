@@ -36,6 +36,9 @@ struct Args {
 
     #[arg(short='g', long="guidance_scale")]
     guidance_scale: Option<f64>,
+    
+    #[arg(long, value_enum, default_value = "v2_1")]
+    sd_version: stable_diffusion::stable_diffusion_files::StableDiffusionVersion,
 
     #[arg(long="medium")]
     medium: Option<prompt::prompt_entities::Medium>,
