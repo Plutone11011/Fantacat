@@ -1,9 +1,10 @@
-use candle_nn::embedding;
+
 use clap::Parser;
 use anyhow::Result;
 use candle_transformers::models::stable_diffusion as sd;
-use candle_core::{Tensor, D};
-use prompt::{prompt_builder, prompt_entities::Medium};
+use candle_core::{Tensor};
+use stable_diffusion::stable_diffusion_files;
+
 
 // use hf_hub::api::tokio::Api;
 // use candle_core::Device;
@@ -65,7 +66,8 @@ fn run_diffusion(args: Args) -> Result<()> {
 
     let width = Some(480 as usize);
     let height = Some(480 as usize);
-    let sd_config = sd::StableDiffusionConfig::v1_5(None, height, width);
+    let sd_version = args.sd_version;
+    let sd_config = stable_diffusion::stable_diffusion_files::get_sd_config_from_version(&sd_version, None, height, width);
     let n_steps = args.n_steps; 
     let device = &candle_core::Device::new_cuda(0)?;
     // let device = &candle_core::Device::Cpu;
@@ -114,9 +116,9 @@ fn run_diffusion(args: Args) -> Result<()> {
     
 
     let embeddings = {
-        let tokenizer = stable_diffusion::clip_embeddings::get_tokenizer(None)?;
+        let tokenizer = stable_diffusion::clip_embeddings::get_tokenizer(None, &sd_version)?;
         let encoded_prompt = stable_diffusion::clip_embeddings::encode_prompt(&prompt, &tokenizer, &sd_config, device)?;
-        let embedding_model = stable_diffusion::clip_embeddings::get_embedding_model(None, &sd_config, device)?;
+        let embedding_model = stable_diffusion::clip_embeddings::get_embedding_model(None, &sd_config, &sd_version, device)?;
         if use_guidance_scale {
             let encoded_uncond_prompt = stable_diffusion::clip_embeddings::encode_prompt(&uncond_prompt, &tokenizer, &sd_config, device)?;
             stable_diffusion::clip_embeddings::get_embeddings_for_guidance_scale(&encoded_prompt, &encoded_uncond_prompt,&embedding_model)

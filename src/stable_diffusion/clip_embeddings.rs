@@ -6,15 +6,14 @@ use candle_core::{Device, DType};
 
 
 use crate::stable_diffusion::stable_diffusion_files;
-use crate::stable_diffusion::stable_diffusion_files::ModelFileBuild;
 
 const CLIP_SPECIAL_TOKEN: &str = "<|endoftext|>";
 
-pub fn get_tokenizer(tokenizer_file: Option<String>) -> anyhow::Result<Tokenizer>{
+pub fn get_tokenizer(tokenizer_file: Option<String>, sd_version: &stable_diffusion_files::StableDiffusionVersion) -> anyhow::Result<Tokenizer>{
 
     let tokenizer = stable_diffusion_files::StableDiffusionFiles::Tokenizer;
-    let sd_version = stable_diffusion_files::StableDiffusion1_5{};
-    let tokenizer_file = sd_version.get(&tokenizer, tokenizer_file, true)?;
+    let sd = stable_diffusion_files::create_sd_from_version(sd_version);
+    let tokenizer_file = sd.get(&tokenizer, tokenizer_file, true)?;
 
     let tokenizer = Tokenizer::from_file(tokenizer_file).map_err(anyhow::Error::msg)?;
 
@@ -22,10 +21,10 @@ pub fn get_tokenizer(tokenizer_file: Option<String>) -> anyhow::Result<Tokenizer
     
 }
 
-pub fn get_embedding_model(embedding_file: Option<String>, stable_diffusion_config: &stable_diffusion::StableDiffusionConfig, device: &Device) -> anyhow::Result<stable_diffusion::clip::ClipTextTransformer>{
+pub fn get_embedding_model(embedding_file: Option<String>, stable_diffusion_config: &stable_diffusion::StableDiffusionConfig, sd_version: &stable_diffusion_files::StableDiffusionVersion, device: &Device) -> anyhow::Result<stable_diffusion::clip::ClipTextTransformer>{
     let clip = stable_diffusion_files::StableDiffusionFiles::Clip;
-    let sd_version = stable_diffusion_files::StableDiffusion1_5{};
-    let clip_weights_file = sd_version.get(&clip, embedding_file, true)?;
+    let sd = stable_diffusion_files::create_sd_from_version(sd_version);
+    let clip_weights_file = sd.get(&clip, embedding_file, true)?;
 
     let text_model = stable_diffusion::build_clip_transformer(&stable_diffusion_config.clip, clip_weights_file, device, DType::F16)?;
 
@@ -98,7 +97,7 @@ mod tests {
 
     #[test]
     fn stable_diffusion_tokenizer(){
-        let tokenizer = get_tokenizer(None);
+        let tokenizer = get_tokenizer(None, &stable_diffusion_files::StableDiffusionVersion::Turbo);
 
         assert!(tokenizer.is_ok())
     }
@@ -107,11 +106,11 @@ mod tests {
 
         let width = Some(640 as usize);
         let height: Option<usize> = Some(480 as usize);
-        let sd_config = stable_diffusion::StableDiffusionConfig::v1_5(None, height, width);
-        let tokenizer = get_tokenizer(None)?;
+        let sd_config = stable_diffusion::StableDiffusionConfig::sdxl(None, height, width);
+        let tokenizer = get_tokenizer(None, &stable_diffusion_files::StableDiffusionVersion::Xl)?;
         // assumes padding token in clip config has been set to None
         let padding_id = get_padding_id(&tokenizer, &sd_config);
-        assert_eq!(padding_id, *tokenizer.get_vocab(true).get(CLIP_SPECIAL_TOKEN).unwrap());
+        assert_eq!(padding_id, *tokenizer.get_vocab(true).get("!").unwrap());
         Ok(())
 
     }
@@ -122,8 +121,8 @@ mod tests {
 
         let width = Some(640 as usize);
         let height: Option<usize> = Some(480 as usize);
-        let sd_config = stable_diffusion::StableDiffusionConfig::v1_5(None, height, width);
-        let tokenizer = get_tokenizer(None)?;
+        let sd_config = stable_diffusion::StableDiffusionConfig::v2_1(None, height, width);
+        let tokenizer = get_tokenizer(None, &stable_diffusion_files::StableDiffusionVersion::V2_1)?;
             
         // assumes padding token in clip config has been set to None
         let encoded_prompt = encode_prompt(prompt, &tokenizer, &sd_config, &candle_core::Device::Cpu);
@@ -139,7 +138,7 @@ mod tests {
         let height: Option<usize> = Some(480 as usize);
         let sd_config = stable_diffusion::StableDiffusionConfig::v1_5(None, height, width);
 
-        let embedding_model = get_embedding_model(None, &sd_config, &candle_core::Device::Cpu);
+        let embedding_model = get_embedding_model(None, &sd_config, &stable_diffusion_files::StableDiffusionVersion::V1_5, &candle_core::Device::Cpu);
         assert!(embedding_model.is_ok());
         Ok(())
  
@@ -153,13 +152,13 @@ mod tests {
 
         let width = Some(640 as usize);
         let height: Option<usize> = Some(480 as usize);
-        let sd_config = stable_diffusion::StableDiffusionConfig::v1_5(None, height, width);
-        let tokenizer = get_tokenizer(None)?;
+        let sd_config = stable_diffusion::StableDiffusionConfig::sdxl_turbo(None, height, width);
+        let tokenizer = get_tokenizer(None, &stable_diffusion_files::StableDiffusionVersion::Turbo)?;
             
         // assumes padding token in clip config has been set to None
         let encoded_prompt = encode_prompt(prompt, &tokenizer, &sd_config, &candle_core::Device::Cpu)?;
         let encoded_uncond_prompt = encode_prompt(uncond_prompt, &tokenizer, &sd_config, &candle_core::Device::Cpu)?;
-        let embedding_model = get_embedding_model(None, &sd_config, &candle_core::Device::Cpu)?;
+        let embedding_model = get_embedding_model(None, &sd_config, &stable_diffusion_files::StableDiffusionVersion::Turbo, &candle_core::Device::Cpu)?;
 
         let embeddings = get_embeddings_for_guidance_scale(&encoded_prompt, &encoded_uncond_prompt, &embedding_model);
 

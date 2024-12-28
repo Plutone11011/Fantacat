@@ -1,4 +1,5 @@
 use std;
+use candle_transformers::models::stable_diffusion;
 use hf_hub::api::sync::Api;
 use anyhow::Result;
 
@@ -130,6 +131,15 @@ pub fn create_sd_from_version(sd_version: &StableDiffusionVersion) -> Box<dyn Mo
         StableDiffusionVersion::V2_1 =>  Box::new(StableDiffusion2_1{}),
         StableDiffusionVersion::Turbo =>  Box::new(StableDiffusionTurbo{}),
         StableDiffusionVersion::Xl =>  Box::new(StableDiffusionX1{})
+    }
+}
+
+pub fn get_sd_config_from_version(sd_version: &StableDiffusionVersion, sliced_attention_size: Option<usize>, height: Option<usize>, width: Option<usize>) -> stable_diffusion::StableDiffusionConfig {
+    match sd_version {
+        StableDiffusionVersion::V1_5 => stable_diffusion::StableDiffusionConfig::v1_5(sliced_attention_size, height, width),
+        StableDiffusionVersion::V2_1 => stable_diffusion::StableDiffusionConfig::v2_1(sliced_attention_size, height, width),
+        StableDiffusionVersion::Turbo => stable_diffusion::StableDiffusionConfig::sdxl_turbo(sliced_attention_size, height, width),
+        StableDiffusionVersion::Xl => stable_diffusion::StableDiffusionConfig::sdxl(sliced_attention_size, height, width)
     }
 }
 
