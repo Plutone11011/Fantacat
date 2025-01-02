@@ -80,21 +80,19 @@ fn run_diffusion(args: Args) -> Result<()> {
     let scheduler = sd_config.build_scheduler(n_steps)?;
     let batch_size = 1;
     let dtype = candle_core::DType::F16;
+    
+    
+    let t_start = 0 ; // relevant for img2img
     let guidance_scale = match args.guidance_scale {
-        None => 7.5,
+        None => match sd_version {
+            stable_diffusion_files::StableDiffusionVersion::V1_5
+            | stable_diffusion_files::StableDiffusionVersion::V2_1
+            | stable_diffusion_files::StableDiffusionVersion::Xl => 7.5,
+            stable_diffusion_files::StableDiffusionVersion::Turbo => 0.,
+        },
         Some(guidance_scale) => guidance_scale
     };
     let use_guidance_scale = guidance_scale > 1.0;
-    let t_start = 0 ; // relevant for img2img
-    // let guidance_scale = match guidance_scale {
-    //     Some(guidance_scale) => guidance_scale,
-    //     None => match sd_version {
-    //         StableDiffusionVersion::V1_5
-    //         | StableDiffusionVersion::V2_1
-    //         | StableDiffusionVersion::Xl => 7.5,
-    //         StableDiffusionVersion::Turbo => 0.,
-    //     },
-    // };
     let color = args.color;
     let style = args.style;
     let medium = args.medium;
