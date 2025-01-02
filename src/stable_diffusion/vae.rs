@@ -17,6 +17,15 @@ pub fn get_vae(vae_file: Option<String>, stable_diffusion_config: &stable_diffus
 
 }
 
+pub fn get_vae_scale(sd_version: &stable_diffusion_files::StableDiffusionVersion) -> f64{
+    match sd_version {
+        stable_diffusion_files::StableDiffusionVersion::V1_5
+         | stable_diffusion_files::StableDiffusionVersion::V2_1
+         | stable_diffusion_files::StableDiffusionVersion::Xl => 0.18215,
+         stable_diffusion_files::StableDiffusionVersion::Turbo => 0.13025,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

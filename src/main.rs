@@ -26,6 +26,12 @@ struct Args {
     #[arg(long="n_steps", default_value_t = 5)]
     n_steps: usize,
 
+    #[arg(long="width", default_value_t = 480)]
+    width: usize,
+
+    #[arg(long="height", default_value_t = 480)]
+    height: usize,
+
     #[arg(long="intermediary_images", default_value_t = true)]
     intermediary_images: bool,
 
@@ -64,8 +70,8 @@ struct Args {
 fn run_diffusion(args: Args) -> Result<()> {
     
 
-    let width = Some(480 as usize);
-    let height = Some(480 as usize);
+    let width = Some(args.width);
+    let height = Some(args.height);
     let sd_version = args.sd_version;
     let sd_config = stable_diffusion::stable_diffusion_files::get_sd_config_from_version(&sd_version, None, height, width);
     let n_steps = args.n_steps; 
@@ -105,13 +111,8 @@ fn run_diffusion(args: Args) -> Result<()> {
     let prompt = prompt.to_string();
     let uncond_prompt = "" ;
     println!("Generate an image for prompt: {}", prompt);
-    let vae_scale: f64 = 0.18215;
-    // match sd_version {
-    //     StableDiffusionVersion::V1_5
-    //     | StableDiffusionVersion::V2_1
-    //     | StableDiffusionVersion::Xl => 0.18215,
-    //     StableDiffusionVersion::Turbo => 0.13025,
-    // };
+    let vae_scale: f64 = stable_diffusion::vae::get_vae_scale(&sd_version);
+
     
     
 
