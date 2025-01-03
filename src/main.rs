@@ -133,9 +133,9 @@ fn run_diffusion(args: Args) -> Result<()> {
     let embeddings = embeddings.repeat((batch_size, 1, 1))?;
     println!("Batch of embeddings created {:?}.", embeddings.shape());
 
-    let vae = stable_diffusion::vae::get_vae(None, &sd_config, device, dtype)?;
+    let vae = stable_diffusion::vae::get_vae(None, &sd_version, &sd_config, device, dtype)?;
     println!("VAE created.");
-    let unet = stable_diffusion::unet::get_unet(None, &sd_config, device, dtype, args.use_flash_attn)?;
+    let unet = stable_diffusion::unet::get_unet(None, &sd_version, &sd_config, device, dtype, args.use_flash_attn)?;
     println!("UNet created");
 
     for idx in 0..args.n_images {
