@@ -1,8 +1,8 @@
 
 use clap::Parser;
 use anyhow::Result;
-use candle_transformers::models::stable_diffusion as sd;
-use candle_core::{Tensor};
+
+use candle_core::{Tensor,D};
 use stable_diffusion::stable_diffusion_files;
 
 
@@ -114,19 +114,27 @@ fn run_diffusion(args: Args) -> Result<()> {
     
     
 
-    let embeddings = {
-        let tokenizer = stable_diffusion::clip_embeddings::get_tokenizer(None, &sd_version)?;
-        let encoded_prompt = stable_diffusion::clip_embeddings::encode_prompt(&prompt, &tokenizer, &sd_config, device)?;
-        let embedding_model = stable_diffusion::clip_embeddings::get_embedding_model(None, &sd_config, &sd_version, device)?;
-        if use_guidance_scale {
-            let encoded_uncond_prompt = stable_diffusion::clip_embeddings::encode_prompt(&uncond_prompt, &tokenizer, &sd_config, device)?;
-            stable_diffusion::clip_embeddings::get_embeddings_for_guidance_scale(&encoded_prompt, &encoded_uncond_prompt,&embedding_model)
-        }
-        else {
-            stable_diffusion::clip_embeddings::get_embeddings(&encoded_prompt, &embedding_model)
-        }
-        
-    }?;
+    let mut embeddings = stable_diffusion::clip_embeddings::embed_text(&prompt,
+                                                                            &uncond_prompt,
+                                                                            None,
+                                                                            None,
+                                                                            &sd_version,
+                                                                            &sd_config,
+                                                                            device,
+                                                                            use_guidance_scale,
+                                                                            true)?;
+    if matches!(sd_version, stable_diffusion_files::StableDiffusionVersion::Turbo | stable_diffusion_files::StableDiffusionVersion::Xl){
+        let embeddings_second_pass = vec![embeddings, stable_diffusion::clip_embeddings::embed_text(&prompt,
+            &uncond_prompt,
+            None,
+            None,
+            &sd_version,
+            &sd_config,
+            device,
+            use_guidance_scale,
+            false)?];
+        embeddings = Tensor::cat(&embeddings_second_pass, D::Minus1)?;
+    }
     println!("Embeddings created {:?}.", embeddings.shape());
     // only needed for turbo and xl since they use different embedding models
     // let text_embeddings = Tensor::cat(&embeddings, D::Minus1)?;
