@@ -11,7 +11,9 @@ pub enum StableDiffusionFiles{
     Tokenizer,
     Clip,
     Unet,
-    Vae
+    Vae,
+    ClipX1Turbo,
+    TokenizerX1Turbo
 }
 
 #[derive(Debug, Clone, Copy, clap::ValueEnum, PartialEq, Eq)]
@@ -35,6 +37,10 @@ pub trait ModelFileBuild {
         if use_f16 { constants::MODELFILE_CLIP_FP16 } else { constants::MODELFILE_CLIP }
     }
 
+    fn get_clip2_filepath(&self, use_f16: bool) -> &str {
+        if use_f16 { constants::MODELFILE_CLIP2_FP16 } else { constants::MODELFILE_CLIP2 }
+    }
+
     fn get_unet_filepath(&self, use_f16: bool) -> &str {
         if use_f16 { constants::MODELFILE_UNET_FP16 } else { constants::MODELFILE_UNET }
     }
@@ -48,7 +54,7 @@ pub trait ModelFileBuild {
             None => {
                 let repo = self.get_repo_with_precision(sd_file, Some(use_f16));
                 let filepath = match sd_file {
-                    StableDiffusionFiles::Tokenizer => self.get_tokenizer_filepath(),
+                    StableDiffusionFiles::Tokenizer|StableDiffusionFiles::TokenizerX1Turbo => self.get_tokenizer_filepath(),
                     StableDiffusionFiles::Clip => {
                         self.get_clip_filepath(use_f16)
                     },
@@ -57,6 +63,9 @@ pub trait ModelFileBuild {
                     },
                     StableDiffusionFiles::Vae => {
                         self.get_vae_filepath(use_f16)
+                    },
+                    StableDiffusionFiles::ClipX1Turbo => {
+                        self.get_clip2_filepath(use_f16)
                     }
                 };
 
@@ -74,7 +83,8 @@ impl ModelFileBuild for StableDiffusion1_5 {
     fn get_repo_with_precision(&self, sd_file: &StableDiffusionFiles, _use_f16: Option<bool>) -> &str {
         match sd_file {
             StableDiffusionFiles::Tokenizer => constants::REPO_TOKENIZER,
-            StableDiffusionFiles::Clip|StableDiffusionFiles::Unet|StableDiffusionFiles::Vae => constants::REPO_1_5
+            StableDiffusionFiles::TokenizerX1Turbo => constants::REPO_TOKENIZER2,
+            StableDiffusionFiles::Clip|StableDiffusionFiles::Unet|StableDiffusionFiles::Vae|StableDiffusionFiles::ClipX1Turbo => constants::REPO_1_5
         }
     }
 
@@ -87,7 +97,8 @@ impl ModelFileBuild for StableDiffusion2_1 {
     fn get_repo_with_precision(&self, sd_file: &StableDiffusionFiles, _use_f16: Option<bool>) -> &str {
         match sd_file {
             StableDiffusionFiles::Tokenizer => constants::REPO_TOKENIZER,
-            StableDiffusionFiles::Clip|StableDiffusionFiles::Unet|StableDiffusionFiles::Vae => constants::REPO_2_1
+            StableDiffusionFiles::TokenizerX1Turbo => constants::REPO_TOKENIZER2,
+            StableDiffusionFiles::Clip|StableDiffusionFiles::Unet|StableDiffusionFiles::Vae|StableDiffusionFiles::ClipX1Turbo => constants::REPO_2_1
         }
     }
 }
@@ -99,7 +110,8 @@ impl ModelFileBuild for StableDiffusionTurbo{
     fn get_repo_with_precision(&self, sd_file: &StableDiffusionFiles, _use_f16: Option<bool>) -> &str {
         match sd_file {
             StableDiffusionFiles::Tokenizer => constants::REPO_TOKENIZER_X1TURBO,
-            StableDiffusionFiles::Clip|StableDiffusionFiles::Unet => constants::REPO_TURBO,
+            StableDiffusionFiles::Clip|StableDiffusionFiles::Unet|StableDiffusionFiles::ClipX1Turbo => constants::REPO_TURBO,
+            StableDiffusionFiles::TokenizerX1Turbo => constants::REPO_TOKENIZER2,
             StableDiffusionFiles::Vae => if _use_f16.unwrap_or(false) {constants::REPO_VAE_X1TURBO_FP16} else {constants::REPO_TURBO}
         }
     }
@@ -115,7 +127,8 @@ impl ModelFileBuild for StableDiffusionX1{
     fn get_repo_with_precision(&self, sd_file: &StableDiffusionFiles, _use_f16: Option<bool>) -> &str {
         match sd_file {
             StableDiffusionFiles::Tokenizer => constants::REPO_TOKENIZER_X1TURBO,
-            StableDiffusionFiles::Clip|StableDiffusionFiles::Unet => constants::REPO_X1,
+            StableDiffusionFiles::TokenizerX1Turbo => constants::REPO_TOKENIZER2,
+            StableDiffusionFiles::Clip|StableDiffusionFiles::Unet|StableDiffusionFiles::ClipX1Turbo => constants::REPO_X1,
             StableDiffusionFiles::Vae => if _use_f16.unwrap_or(false) {constants::REPO_VAE_X1TURBO_FP16} else {constants::REPO_TURBO}
         }
     }
