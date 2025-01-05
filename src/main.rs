@@ -35,6 +35,10 @@ struct Args {
     #[arg(long="intermediary_images", default_value_t = true)]
     intermediary_images: bool,
 
+    /// Number of images to generate
+    #[arg(long="batch_size", default_value_t = 1)]
+    batch_size: usize,
+
     #[arg(short='o', long="output")]
     final_image: String,
 
@@ -43,6 +47,9 @@ struct Args {
 
     #[arg(short='g', long="guidance_scale")]
     guidance_scale: Option<f64>,
+
+    #[arg(long="gpu", default_value_t=false)]
+    gpu: bool,
     
     #[arg(long, value_enum, default_value = "v2_1")]
     sd_version: stable_diffusion::stable_diffusion_files::StableDiffusionVersion,
@@ -74,11 +81,11 @@ fn run_diffusion(args: Args) -> Result<()> {
     let height = Some(args.height);
     let sd_version = args.sd_version;
     let sd_config = stable_diffusion::stable_diffusion_files::get_sd_config_from_version(&sd_version, None, height, width);
-    let n_steps = args.n_steps; 
-    let device = &candle_core::Device::new_cuda(0)?;
+    let n_steps = args.n_steps;
+    let device = if args.gpu {&candle_core::Device::new_cuda(0)? } else {&candle_core::Device::Cpu};
     // let device = &candle_core::Device::Cpu;
     let scheduler = sd_config.build_scheduler(n_steps)?;
-    let batch_size = 1;
+    let batch_size = args.batch_size;
     let dtype = candle_core::DType::F16;
     
     
@@ -98,7 +105,7 @@ fn run_diffusion(args: Args) -> Result<()> {
     let medium = args.medium;
     let breed = args.breed;
     let details = args.details;
-    let prompt_builder = prompt::prompt_builder::PromptBuilder::default();
+    let prompt_builder = prompt::prompt_builder::Prompt::builder();
     let prompt = prompt_builder.set_breed(breed)
                                         .set_color(color)
                                         .set_details(details)

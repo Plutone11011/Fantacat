@@ -25,9 +25,7 @@ pub enum StableDiffusionVersion {
 }
 
 pub trait ModelFileBuild {
-    fn get_repo(&self, sd_file: &StableDiffusionFiles) -> &str{
-        self.get_repo_with_precision(sd_file, None)
-    }
+    
     fn get_repo_with_precision(&self, sd_file: &StableDiffusionFiles, use_f16: Option<bool>) -> &str;
     fn get_tokenizer_filepath(&self) -> &str {
         constants::MODELFILE_TOKENIZER
@@ -164,7 +162,7 @@ mod tests {
     fn sd_files_unet() {
         let model_file = StableDiffusionFiles::Unet;
         let sd_version = StableDiffusion1_5{};
-        let unet_repo = sd_version.get_repo(&model_file);
+        let unet_repo = sd_version.get_repo_with_precision(&model_file, None);
         let unet_path = sd_version.get_unet_filepath(true);
         
         assert_eq!(unet_repo, "stable-diffusion-v1-5/stable-diffusion-v1-5");
@@ -175,7 +173,7 @@ mod tests {
     fn sd_files_vae() {
         let model_file = StableDiffusionFiles::Vae;
         let sd_version = StableDiffusion1_5{};
-        let vae_repo = sd_version.get_repo(&model_file);
+        let vae_repo = sd_version.get_repo_with_precision(&model_file, None);
         let vae_path = sd_version.get_vae_filepath(false);
         
         assert_eq!(vae_repo, "stable-diffusion-v1-5/stable-diffusion-v1-5");
@@ -185,7 +183,7 @@ mod tests {
     fn sd_files_tokenizer() {
         let model_file = StableDiffusionFiles::Tokenizer;
         let sd_version = StableDiffusion1_5{};
-        let tokenizer_repo = sd_version.get_repo(&model_file);
+        let tokenizer_repo = sd_version.get_repo_with_precision(&model_file, None);
         let tokenizer_path = sd_version.get_tokenizer_filepath();
         
         assert_eq!(tokenizer_repo, "openai/clip-vit-base-patch32");
@@ -195,7 +193,7 @@ mod tests {
     fn sd_files_encoder() {
         let model_file = StableDiffusionFiles::Clip;
         let sd_version = StableDiffusion1_5{};
-        let encoder_repo = sd_version.get_repo(&model_file);
+        let encoder_repo = sd_version.get_repo_with_precision(&model_file, None);
         let encoder_path = sd_version.get_clip_filepath(true);
         
         assert_eq!(encoder_repo, "stable-diffusion-v1-5/stable-diffusion-v1-5");
