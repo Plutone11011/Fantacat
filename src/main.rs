@@ -172,7 +172,7 @@ fn run_diffusion(args: Args) -> Result<()> {
                 continue;
             }
             let start_time = std::time::Instant::now();
-
+            
             let latent_model_input = if use_guidance_scale {
                 // with guidance scale, need to start from duplicated latents
                 // because model will process prompt and unconditional prompt simultaneously
@@ -180,12 +180,13 @@ fn run_diffusion(args: Args) -> Result<()> {
             } else {
                 latents.clone()
             };
-
+            println!("Created latent model input with shape {:?}", latent_model_input.shape());
             let latent_model_input = scheduler.scale_model_input(latent_model_input, timestep)?;
-
+            println!("Scaled latent model input with shape {:?}", latent_model_input.shape());
             let noise_pred =
                 unet.forward(&latent_model_input, timestep as f64, &embeddings)?;
             
+            println!("Unet forward pass");
             let noise_pred = if use_guidance_scale {
                 let noise_pred = noise_pred.chunk(2, 0)?;
                 let (noise_pred_uncond, noise_pred_text) = (&noise_pred[0], &noise_pred[1]);
@@ -194,9 +195,9 @@ fn run_diffusion(args: Args) -> Result<()> {
             } else {
                 noise_pred
             };
-
+            println!("Computed noise");
             latents = scheduler.step(&noise_pred, timestep, &latents)?;
-
+            println!("Updated latent representation with noise");
             let dt = start_time.elapsed().as_secs_f32();
             println!("step {}/{n_steps} done, {:.2}s", timestep_index + 1, dt);
 

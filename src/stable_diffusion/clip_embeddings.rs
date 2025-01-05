@@ -23,7 +23,7 @@ pub fn get_tokenizer(tokenizer_file: Option<String>, sd_version: &stable_diffusi
 
 pub fn get_alt_tokenizer(tokenizer_file: Option<String>, sd_version: &stable_diffusion_files::StableDiffusionVersion) -> anyhow::Result<Tokenizer>{
 
-    let tokenizer = stable_diffusion_files::StableDiffusionFiles::TokenizerX1Turbo;
+    let tokenizer = stable_diffusion_files::StableDiffusionFiles::TokenizerXlTurbo;
     let sd = stable_diffusion_files::create_sd_from_version(sd_version);
     let tokenizer_file = sd.get(&tokenizer, tokenizer_file, true)?;
 
@@ -33,38 +33,38 @@ pub fn get_alt_tokenizer(tokenizer_file: Option<String>, sd_version: &stable_dif
     
 }
 
-pub fn get_embedding_model(embedding_file: Option<String>, stable_diffusion_config: &stable_diffusion::StableDiffusionConfig, sd_version: &stable_diffusion_files::StableDiffusionVersion, device: &Device) -> anyhow::Result<stable_diffusion::clip::ClipTextTransformer>{
+pub fn get_embedding_model(embedding_file: Option<String>, sd_config: &stable_diffusion::StableDiffusionConfig, sd_version: &stable_diffusion_files::StableDiffusionVersion, device: &Device) -> anyhow::Result<stable_diffusion::clip::ClipTextTransformer>{
     let clip = stable_diffusion_files::StableDiffusionFiles::Clip;
     let sd = stable_diffusion_files::create_sd_from_version(sd_version);
     let clip_weights_file = sd.get(&clip, embedding_file, true)?;
 
-    let text_model = stable_diffusion::build_clip_transformer(&stable_diffusion_config.clip, clip_weights_file, device, DType::F16)?;
+    let text_model = stable_diffusion::build_clip_transformer(&sd_config.clip, clip_weights_file, device, DType::F16)?;
 
     
     Ok(text_model)
 }
 
-pub fn get_alt_embedding_model(embedding_file: Option<String>, stable_diffusion_config: &stable_diffusion::StableDiffusionConfig, sd_version: &stable_diffusion_files::StableDiffusionVersion, device: &Device) -> anyhow::Result<stable_diffusion::clip::ClipTextTransformer>{
-    let clip = stable_diffusion_files::StableDiffusionFiles::Clip;
+pub fn get_alt_embedding_model(embedding_file: Option<String>, sd_config: &stable_diffusion::StableDiffusionConfig, sd_version: &stable_diffusion_files::StableDiffusionVersion, device: &Device) -> anyhow::Result<stable_diffusion::clip::ClipTextTransformer>{
+    let clip = stable_diffusion_files::StableDiffusionFiles::ClipXlTurbo;
     let sd = stable_diffusion_files::create_sd_from_version(sd_version);
     let clip_weights_file = sd.get(&clip, embedding_file, true)?;
 
-    let text_model = stable_diffusion::build_clip_transformer(&stable_diffusion_config.clip, clip_weights_file, device, DType::F16)?;
+    let text_model = stable_diffusion::build_clip_transformer(sd_config.clip2.as_ref().unwrap(), clip_weights_file, device, DType::F16)?;
 
     
     Ok(text_model)
 }
 
-fn get_padding_id(tokenizer: &Tokenizer, stable_diffusion_config: &stable_diffusion::StableDiffusionConfig) -> u32{
+fn get_padding_id(tokenizer: &Tokenizer, sd_config: &stable_diffusion::StableDiffusionConfig) -> u32{
     // padding id depends on passed configuration
-    let pad_id = match &stable_diffusion_config.clip.pad_with {
+    let pad_id = match &sd_config.clip.pad_with {
         Some(padding) => *tokenizer.get_vocab(true).get(padding.as_str()).unwrap(),
         None => *tokenizer.get_vocab(true).get(CLIP_SPECIAL_TOKEN).unwrap()
     };
     pad_id
 }
 
-pub fn encode_prompt(prompt: &str, tokenizer: &Tokenizer, stable_diffusion_config: &stable_diffusion::StableDiffusionConfig, device: &candle_core::Device) -> anyhow::Result<candle_core::Tensor>{
+pub fn encode_prompt(prompt: &str, tokenizer: &Tokenizer, sd_config: &stable_diffusion::StableDiffusionConfig, device: &candle_core::Device) -> anyhow::Result<candle_core::Tensor>{
 
     let tokens = tokenizer
         .encode(prompt, true)
@@ -72,20 +72,20 @@ pub fn encode_prompt(prompt: &str, tokenizer: &Tokenizer, stable_diffusion_confi
         .get_ids()
         .to_vec();
 
-    let padding_id = get_padding_id(&tokenizer, &stable_diffusion_config);
+    let padding_id = get_padding_id(&tokenizer, &sd_config);
     
     let padded_tokens: Vec<_>;
     let n_tokens = tokens.len();
-    if  n_tokens <= stable_diffusion_config.clip.max_position_embeddings{
+    if  n_tokens <= sd_config.clip.max_position_embeddings{
         padded_tokens = tokens
         .into_iter()
         .chain(std::iter::repeat(padding_id)
-            .take(stable_diffusion_config.clip.max_position_embeddings - n_tokens))
+            .take(sd_config.clip.max_position_embeddings - n_tokens))
         .collect();
     } 
     else {
         // prompt too long, panic
-        anyhow::bail!("Prompt is too long ({}), max tokens allowed {}", n_tokens, stable_diffusion_config.clip.max_position_embeddings)
+        anyhow::bail!("Prompt is too long ({}), max tokens allowed {}", n_tokens, sd_config.clip.max_position_embeddings)
     }
 
 
@@ -117,7 +117,7 @@ pub fn embed_text(prompt: &str,
                     tokenizer_file: Option<String>,
                     embedding_file: Option<String>,
                     sd_version: &stable_diffusion_files::StableDiffusionVersion, 
-                    stable_diffusion_config: &stable_diffusion::StableDiffusionConfig,
+                    sd_config: &stable_diffusion::StableDiffusionConfig,
                     device: &candle_core::Device,
                     use_guidance_scale: bool, 
                     first_pass: bool) -> anyhow::Result<candle_core::Tensor>{
@@ -127,16 +127,16 @@ pub fn embed_text(prompt: &str,
     else {
         get_alt_tokenizer(tokenizer_file, &sd_version)?
     };
-    let encoded_prompt = encode_prompt(&prompt, &tokenizer, &stable_diffusion_config, device)?;
+    let encoded_prompt = encode_prompt(&prompt, &tokenizer, &sd_config, device)?;
     let embedding_model = if first_pass {
-        get_embedding_model(embedding_file, &stable_diffusion_config, &sd_version, device)?
+        get_embedding_model(embedding_file, &sd_config, &sd_version, device)?
     }
     else {
-        get_alt_embedding_model(embedding_file, stable_diffusion_config, sd_version, device)?
+        get_alt_embedding_model(embedding_file, &sd_config, sd_version, device)?
     };
 
     if use_guidance_scale {
-        let encoded_uncond_prompt = encode_prompt(&uncond_prompt, &tokenizer, &stable_diffusion_config, device)?;
+        let encoded_uncond_prompt = encode_prompt(&uncond_prompt, &tokenizer, &sd_config, device)?;
         get_embeddings_for_guidance_scale(&encoded_prompt, &encoded_uncond_prompt,&embedding_model)
     }
     else {
